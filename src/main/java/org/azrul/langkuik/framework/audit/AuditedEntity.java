@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.azrul.langkuik.framework.audit;
 
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.List;
 import org.azrul.langkuik.security.role.EntityOperation;
+import org.hibernate.envers.RevisionType;
 
 /**
  *
  * @author azrulm
  */
 public class AuditedEntity<T> {
+
     private Number revisionNumber;
     private T object;
-    
+
     private Date modifiedDate;
     private String userId;
     private EntityOperation operation;
@@ -104,6 +105,16 @@ public class AuditedEntity<T> {
         this.operation = operation;
     }
 
+//    public void setOperation(RevisionType revisionType) {
+//        if (revisionType == RevisionType.ADD) {
+//            operation = EntityOperation.CREATE_UPDATE;
+//        } else if (revisionType == RevisionType.DEL) {
+//            operation = EntityOperation.DELETE;
+//        } else {
+//            operation = EntityOperation.UPDATE;
+//        }
+//    }
+
     /**
      * @return the auditFields
      */
@@ -118,5 +129,4 @@ public class AuditedEntity<T> {
         this.auditedFields = auditFields;
     }
 
-    
 }

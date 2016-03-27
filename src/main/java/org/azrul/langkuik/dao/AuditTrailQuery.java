@@ -111,6 +111,7 @@ public class AuditTrailQuery<T> implements DAOQuery<AuditedEntity, AuditedEntity
 
                 AuditedEntity auditedEntity = new AuditedEntity();
                 auditedEntity.setObject(auditedBean);
+                
                 if (revisionType == RevisionType.ADD) {
                     auditedEntity.setOperation(EntityOperation.CREATE_UPDATE);
                 } else if (revisionType == RevisionType.DEL) {

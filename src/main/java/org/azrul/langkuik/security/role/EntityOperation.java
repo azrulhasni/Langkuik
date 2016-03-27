@@ -5,6 +5,8 @@
  */
 
 package org.azrul.langkuik.security.role;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import org.azrul.langkuik.configs.Configuration;
 
 /**
@@ -20,7 +22,8 @@ public enum EntityOperation {
 
     @Override
     public String toString() {
-         Configuration config = new Configuration();
-         return config.get("security.operation."+this.name());
+          Locale locale = new Locale("en");
+         ResourceBundle resourceBundle = ResourceBundle.getBundle("Text", locale);
+         return resourceBundle.getString("security.operation."+this.name());
     }
 }
