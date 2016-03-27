@@ -1,0 +1,10 @@
+1) Only 1 id per entity
+2) Relationship must be parameterized
+3) Cannot handle inheritance of CustomType unless it is the same DAO (to be verified?)
+4) Cannot display Collection field in a table (due to lazy loading)
+5) Read-only field (can be due to rights) should be compulsory. Prefer using @WebField(... required=true) rather
+   than @Basic(optional=false) since required will be managed
+6) If nestedAllowed = true, the relationship need to be a) XToOne only b) Has to be Fetch.EAGER
+7) Nested classes fields are limited to 10000, we cannot order by these fields.
+8) Only 1 level of nested is allowed
+9) Audit only for basic fields

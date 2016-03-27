@@ -1,0 +1,8 @@
+1) Multi-autocomplete
+2) Active choice - choose child=>auto choose parent
+3) i18n - DONE
+4) Audit trail
+5) 'Where used' for root objects - DONE
+6) Workflow
+    6.1) Chain pages by next  / Enter key
+    6.2) Lock application being opened 
