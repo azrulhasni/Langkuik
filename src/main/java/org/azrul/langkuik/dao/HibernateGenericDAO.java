@@ -93,19 +93,41 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
         }
     }
 
-    public T find(Object id) {
+    public T find(Object id, String tenantId) {
         T bean = null;
         EntityManager em = emf.createEntityManager();
         bean = em.find(classOfEntity, id);
+        if (tenantId!=null){
+            Field tenantField = EntityUtils.getTenantFieldName(bean.getClass());
+            if (tenantField!=null){
+                try {
+                    String tenantIdFromBean  = (String) tenantField.get(bean);
+                    if (tenantIdFromBean!=null){
+                        if (!tenantIdFromBean.equals(tenantId)){
+                            return null;
+                        }
+                    }else{
+                        return null;
+                    }
+                } catch (IllegalArgumentException ex) {
+                    Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IllegalAccessException ex) {
+                    Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        
+        }
         em.close();
         return bean;
     }
 
     //no persistence
-    private T createNew(Class<T> clazz, boolean withId) {
+    private T createNew(Class<T> clazz, boolean withId, String tenantId) {
         EntityManager em = emf.createEntityManager();
         try {
             T bean = clazz.getConstructor().newInstance(new Object[]{});
+            
+            //find an Id
             if (withId == true) {
                 for (Field field : clazz.getDeclaredFields()) {
                     if (field.getAnnotation(WebField.class) != null) {
@@ -127,6 +149,18 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
                     }
                 }
             }
+            
+            //set tenant
+            if (tenantId!=null && !("").equals(tenantId)){
+                for (Field field : clazz.getDeclaredFields()) {
+                    if (field.getAnnotation(WebField.class) != null) {
+                        if (field.getAnnotation(WebField.class).tenantId() ==true) {
+                              field.setAccessible(true);
+                              field.set(bean, tenantId);
+                        }
+                    }
+                }
+            }
             return bean;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             em.getTransaction().rollback();
@@ -138,13 +172,13 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
     }
 
     //no persistence
-    public T createNew() {
-        return createNew(classOfEntity,true);
+    public T createNew(String tenantId) {
+        return createNew(classOfEntity,true, tenantId);
     }
 
     //no persistence
-    public T createNew(boolean giveId) {
-        T bean = createNew(classOfEntity, giveId);
+    public T createNew(boolean giveId,String tenantId) {
+        T bean = createNew(classOfEntity, giveId, tenantId);
         return bean;
     }
 
@@ -300,10 +334,10 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 //        return null;
 //    }
     @Override
-    public Object createAndSave(Class c) {
+    public Object createAndSave(Class c, String tenantId) {
         EntityManager em = emf.createEntityManager();
         try {
-            Object bean = createNew(c,true);//call default constructor
+            Object bean = createNew(c,true,tenantId);//call default constructor
             em.getTransaction().begin();
             em.persist(bean);
             em.flush();
@@ -345,13 +379,13 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 //        return newObject;
 //    }
     @Override
-    public <P> Collection runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset) {
-        return query.doQuery(emf, orderBy, asc, startIndex, offset);
+    public <P> Collection runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset,String tenantId) {
+        return query.doQuery(emf, orderBy, asc, startIndex, offset,tenantId);
     }
 
     @Override
-    public <P> Long countQueryResult(DAOQuery<P, T> query) {
-        return query.count(emf);
+    public <P> Long countQueryResult(DAOQuery<P, T> query,String tenantId) {
+        return query.count(emf,tenantId);
 
     }
 

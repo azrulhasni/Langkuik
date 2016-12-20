@@ -232,7 +232,7 @@ public class RelationView<P, C> extends VerticalView {
                             @Override
                             public void buttonClick(Button.ClickEvent event
                             ) {
-                                C currentBean = dao.createNew();//dao.createAndSave(parentBean, parentToBeanField, pageParameter.getRelationManagerFactory().create((Class<P>) parentBean.getClass(), classOfBean));
+                                C currentBean = dao.createNew(SecurityUtils.getCurrentTenant());//dao.createAndSave(parentBean, parentToBeanField, pageParameter.getRelationManagerFactory().create((Class<P>) parentBean.getClass(), classOfBean));
                                 BeanView<P, C> beanView = new BeanView<P, C>(currentBean, parentBean, parentToBeanField, pageParameter);
                                 String targetView = "CHOOSE_ONE_TABLE_VIEW_" + UUID.randomUUID().toString();
                                 WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);

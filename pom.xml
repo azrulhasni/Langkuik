@@ -28,6 +28,8 @@
         <vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
         <springframework.version>4.2.5.RELEASE</springframework.version>
         <springsecurity.version>4.0.4.RELEASE</springsecurity.version>
+        <!--springframework.version>4.3.4.RELEASE</springframework.version>
+        <springsecurity.version>4.2.0.RELEASE</springsecurity.version-->
  
     </properties>
     <repositories>
@@ -190,6 +192,11 @@
             <artifactId>spring-core</artifactId>
             <version>${springframework.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${springframework.version}</version>
+        </dependency>
       
  
         <!-- Spring Security -->
@@ -203,6 +210,8 @@
             <artifactId>spring-security-config</artifactId>
             <version>${springsecurity.version}</version>
         </dependency>
+        
+        
       
     </dependencies>
 </project>

@@ -17,7 +17,7 @@ import org.azrul.langkuik.annotations.ActiveChoiceHierarchy;
  *
  * @author azrulm
  */
-public class ActiveChoiceUtils  implements Serializable{
+public class ActiveChoiceUtils implements Serializable {
 
     public static List<String> getChildrenByParent(Class<? extends ActiveChoiceEnum> enumTree, String parent) {
         List<String> children = new ArrayList<>();
@@ -98,26 +98,29 @@ public class ActiveChoiceUtils  implements Serializable{
     public static ActiveChoiceTarget build(Class<? extends ActiveChoiceEnum> enumTree, String parent) {
         ActiveChoiceTarget activeChoice = null;
         String[] hierarchies = enumTree.getAnnotation(ActiveChoiceHierarchy.class).value();
-        String parentHierarchy = null;
-        String childHierarchy = null;
-        for (int i = 0; i < hierarchies.length - 1; i++) {
-            if (hierarchies[i].equals(parent)) {
-                parentHierarchy = hierarchies[i];
-                childHierarchy = hierarchies[i + 1];
+        if (hierarchies.length == 1) {
+
+        } else {
+            String parentHierarchy = null;
+            String childHierarchy = null;
+            for (int i = 0; i < hierarchies.length - 1; i++) {
+                if (hierarchies[i].equals(parent)) {
+                    parentHierarchy = hierarchies[i];
+                    childHierarchy = hierarchies[i + 1];
+                }
+            }
+            if (parentHierarchy != null && childHierarchy != null) {
+                activeChoice = new ActiveChoiceTarget();
+                List<String> parentValues = getElementByHierarchy(enumTree, parentHierarchy);
+                Map<String, List<String>> parentChildrenValues = getChildrenAndParentByHierarchy(enumTree, childHierarchy);
+
+                activeChoice.setSourceHierarchy(parentHierarchy);
+                activeChoice.setTargetHierarchy(childHierarchy);
+                activeChoice.setSourceChoices(parentValues);
+                activeChoice.setTargets(parentChildrenValues);
             }
         }
-        if (parentHierarchy != null && childHierarchy != null) {
-            activeChoice = new ActiveChoiceTarget();
-            List<String> parentValues = getElementByHierarchy(enumTree, parentHierarchy);
-            Map<String, List<String>> parentChildrenValues = getChildrenAndParentByHierarchy(enumTree, childHierarchy);
-           
-            activeChoice.setSourceHierarchy(parentHierarchy);
-            activeChoice.setTargetHierarchy(childHierarchy);
-            activeChoice.setSourceChoices(parentValues);
-            activeChoice.setTargets(parentChildrenValues);
-        }
-        return activeChoice ;
+        return activeChoice;
     }
-    
 
 }

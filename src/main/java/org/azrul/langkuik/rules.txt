@@ -8,3 +8,4 @@
 7) Nested classes fields are limited to 10000, we cannot order by these fields.
 8) Only 1 level of nested is allowed
 9) Audit only for basic fields
+10) Tenant id field must be String and must have Analyze.YES

@@ -50,8 +50,8 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
     private final EntityOperation entityOperation;
 
     public void refresh() {
-        Collection<AuditedEntity> auditedEntities = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, this.itemCountPerPage);
-        bigTotal = dao.countQueryResult(daoQuery);
+        Collection<AuditedEntity> auditedEntities = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, this.itemCountPerPage,SecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
         displayPageNumber();
 
         //add to table
@@ -94,8 +94,8 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.user"), String.class, null);
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.modified.at"), String.class, null);
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.operation"), String.class, null);
-        bigTotal = dao.countQueryResult(daoQuery);
-        Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage);
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
+        Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
         addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
         this.addComponent(table);
         pageLabel = new Label();
@@ -113,7 +113,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
 
                 if (currentTableIndex > 0) {
                     currentTableIndex = 0;
-                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage);
+                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
                     addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
 
                     table.setPageLength(itemCountPerPage);
@@ -135,7 +135,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
                 }
                 if (currentTableIndex > 0) {
                     currentTableIndex -= itemCountPerPage;
-                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage);
+                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
                     addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
                     table.setPageLength(itemCountPerPage);
                 }
@@ -159,7 +159,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
                         int currentPage = currentTableIndex / itemCountPerPage;
                         if (currentPage < lastPage) {
                             currentTableIndex += itemCountPerPage;
-                            Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage);
+                            Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
                             addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
                             table.setPageLength(itemCountPerPage);
                         }
@@ -181,7 +181,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
                 int currentPage = currentTableIndex / itemCountPerPage;
                 if (currentPage < lastPage) {
                     currentTableIndex = lastPage * itemCountPerPage;
-                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage);
+                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
                     addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
                     table.setPageLength(itemCountPerPage);
                 }

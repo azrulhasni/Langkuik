@@ -84,7 +84,29 @@ public class SecurityUtils {
         } else {
             return null;
         }
-        return userDetails.getUsername();
+        if (userDetails.getUsername().contains("/")){
+            String[] userPlusTenant = userDetails.getUsername().split("/");
+            return userPlusTenant[0];
+        }else{
+            return userDetails.getUsername();
+        }
+    }
+    
+     public static String getCurrentTenant() {
+        //determine user details
+        UserDetails userDetails = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth instanceof AnonymousAuthenticationToken)) {
+            userDetails = (UserDetails) auth.getPrincipal();
+        } else {
+            return null;
+        }
+        if (userDetails.getUsername().contains("/")){
+            String[] userPlusTenant = userDetails.getUsername().split("/");
+            return userPlusTenant[1];
+        }else{
+            return null;
+        }
     }
 
     public static void logOutUser(HttpServletRequest req, HttpServletResponse resp) {

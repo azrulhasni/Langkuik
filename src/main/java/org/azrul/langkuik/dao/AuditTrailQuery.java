@@ -57,17 +57,17 @@ public class AuditTrailQuery<T> implements DAOQuery<AuditedEntity, AuditedEntity
     }
 
     @Override
-    public Collection<AuditedEntity> doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset) {
+    public Collection<AuditedEntity> doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset,String tenantId) {
         this.emf = emf;
-        return getAuditData(auditedObject, startIndex, offset, null, startingFrom);
+        return getAuditData(auditedObject, startIndex, offset, null, startingFrom, tenantId);
     }
 
     @Override
-    public Long count(EntityManagerFactory emf) {
-        return getAuditDataSize(emf, auditedObject, startingFrom);
+    public Long count(EntityManagerFactory emf, String tenantId) {
+        return getAuditDataSize(emf, auditedObject, startingFrom,tenantId);
     }
 
-    public Long getAuditDataSize(EntityManagerFactory emf, T bean, Date from) {
+    public Long getAuditDataSize(EntityManagerFactory emf, T bean, Date from,String tenantId) {
         AuditReader reader = AuditReaderFactory.get(emf.createEntityManager());
         AuditQuery auditQuery = reader.createQuery()
                 .forRevisionsOfEntity(classOfEntity, false, false)
@@ -81,7 +81,7 @@ public class AuditTrailQuery<T> implements DAOQuery<AuditedEntity, AuditedEntity
         return (Long) auditQuery.addProjection(AuditEntity.id().count()).getSingleResult();
     }
 
-    public List<AuditedEntity> getAuditData(T bean, int startIndex, int offset, List<String> targetFields, Date from) {
+    public List<AuditedEntity> getAuditData(T bean, int startIndex, int offset, List<String> targetFields, Date from, String tenantId) {
 
         List<AuditedEntity> auditedEntities = new ArrayList<>();
         AuditReader reader = AuditReaderFactory.get(emf.createEntityManager());

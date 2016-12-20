@@ -38,11 +38,6 @@ import org.azrul.langkuik.framework.webgui.SearchResultView;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.SecurityUtils;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.vaadin.dialogs.ConfirmDialog;
 
 public class Langkuik implements Serializable{
@@ -123,7 +118,7 @@ public class Langkuik implements Serializable{
                 public void menuSelected(MenuBar.MenuItem selectedItem) {
                     pageParameter.setRootClass(rootClass); //save the root element
                     pageParameter.setType(WorkType.CREATE_NEW);
-                    Object object = dao.createNew();
+                    Object object = dao.createNew(SecurityUtils.getCurrentTenant());
                     BeanView<Object, ?> createNewView = new BeanView<>(object, null,null,pageParameter );
                     String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
                     navigator.addView(targetView,(View)createNewView);

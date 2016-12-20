@@ -23,10 +23,10 @@ public interface DataAccessObject<T> {
     T refresh(T entity);
    
     //Create
-    T createNew(); //transient
-    T createNew(boolean giveId); //transient
+    T createNew(String tenantId); //transient
+    T createNew(boolean giveId, String tenantId); //transient
     //T createAndSave();
-    Object createAndSave(Class c);
+    Object createAndSave(Class c, String tenantId);
     //<P> T createAndSave(P parentObject, String parentToCurrentField, RelationManager<P, T> relationManager);
     //<P> T createAndSave(DaoParameter<P, T> parameter);
     
@@ -46,12 +46,12 @@ public interface DataAccessObject<T> {
 
     //navigate
 //    <P> Long count(P parentObject, String parentObjectField);
-    T find(Object id);
+    T find(Object id, String tenantId);
    
     //search
     <P> Collection<T> searchResultAlreadyInParent(Collection<T> searchResult, Class<T> daoClass, P parentObject, String parentToChildrenField);
-    <P> Long countQueryResult(DAOQuery<P, T> query);
-    <P> Collection<T> runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset);
+    <P> Long countQueryResult(DAOQuery<P, T> query, String tenantId);
+    <P> Collection<T> runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset,String tenantId);
     
     //audit
     //List<AuditedEntity> getAuditData(T bean,int startIndex, int offset, List<String> targetFields);

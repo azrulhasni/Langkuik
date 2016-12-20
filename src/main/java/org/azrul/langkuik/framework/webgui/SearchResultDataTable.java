@@ -37,6 +37,7 @@ import org.azrul.langkuik.framework.activechoice.ActiveChoiceUtils;
 import org.azrul.langkuik.framework.activechoice.EmptyEnum;
 import org.azrul.langkuik.framework.exception.EntityIsUsedException;
 import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.SecurityUtils;
 
 /**
  *
@@ -182,12 +183,12 @@ public class SearchResultDataTable<C> extends DataTable<C> {
                     Logger.getLogger(SearchResultDataTable.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 //do query
-                Collection<C> allData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage);
+                Collection<C> allData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
                 if (allData.isEmpty()) {
                     allData = new ArrayList<>();
-                    allData.add(dao.createNew());
+                    allData.add(dao.createNew(SecurityUtils.getCurrentTenant()));
                 }
-                bigTotal = dao.countQueryResult(daoQuery);
+                bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
                 itemContainer.setBeans(allData);
                 itemContainer.refreshItems();
                 table.setPageLength(itemCountPerPage);
@@ -208,14 +209,14 @@ public class SearchResultDataTable<C> extends DataTable<C> {
     public void deleteEntities(Collection<C> currentBeans) throws EntityIsUsedException {
 
         dao.delete(currentBeans);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage);
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew());
+            data.add(dao.createNew(SecurityUtils.getCurrentTenant()));
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery);
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
 
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {

@@ -16,6 +16,7 @@
 package org.azrul.langkuik.dao;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -26,12 +27,13 @@ import javax.persistence.metamodel.ManagedType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
 import org.azrul.langkuik.annotations.WebEntity;
+import org.azrul.langkuik.annotations.WebField;
 
 /**
  *
  * @author azrulm
  */
-public class EntityUtils  implements Serializable{
+public class EntityUtils implements Serializable {
 
     public static List<Class<?>> getAllEntities(EntityManagerFactory emf) {
         List<Class<?>> managedClasses = new ArrayList<>();
@@ -108,4 +110,17 @@ public class EntityUtils  implements Serializable{
         }
         return null;
     }
+
+    public static Field getTenantFieldName(Class<?> entityClass) {
+        for (Field field : entityClass.getDeclaredFields()) {
+            if (field.getAnnotation(WebField.class) != null) {
+                if (field.getAnnotation(WebField.class).tenantId() == true) {
+                    return field;
+                }
+            }
+        }
+
+        return null;
+    }
+
 }

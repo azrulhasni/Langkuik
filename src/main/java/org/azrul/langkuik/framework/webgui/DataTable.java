@@ -60,7 +60,7 @@ public class DataTable<C> extends VerticalLayout {
     }
     
     public void refresh(){
-       itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage));
+       itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
        itemContainer.refreshItems();
     }
     
@@ -91,8 +91,8 @@ public class DataTable<C> extends VerticalLayout {
         this.pageParameter = pageParameter;
         this.htmlTableLabel = htmlTableLabel;
 
-        Collection<C> allData = dao.runQuery(daoQuery, null, true, currentTableIndex, itemCountPerPage);
-        bigTotal = dao.countQueryResult(daoQuery);
+        Collection<C> allData = dao.runQuery(daoQuery, null, true, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
 
         boolean draw = true;
         if (doNotDrawIfEmpty == false && allData.isEmpty() == true) {
@@ -117,7 +117,7 @@ public class DataTable<C> extends VerticalLayout {
             //if we need to still draw when table is empty, we need to still put one element in there
             //Vaadin limitation
             if (allData.isEmpty()) {
-                allData.add(dao.createNew(false));
+                allData.add(dao.createNew(false,SecurityUtils.getCurrentTenant()));
             }
 
             //Put all data of type T into a table to be chosen
@@ -240,7 +240,7 @@ public class DataTable<C> extends VerticalLayout {
 
                     if (currentTableIndex > 0) {
                         currentTableIndex = 0;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
                         itemContainer.refreshItems();
                         table.setPageLength(itemCountPerPage);
                     }
@@ -261,7 +261,7 @@ public class DataTable<C> extends VerticalLayout {
                     }
                     if (currentTableIndex > 0) {
                         currentTableIndex -= itemCountPerPage;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
                         itemContainer.refreshItems();
                         table.setPageLength(itemCountPerPage);
                     }
@@ -285,7 +285,7 @@ public class DataTable<C> extends VerticalLayout {
                             int currentPage = currentTableIndex / itemCountPerPage;
                             if (currentPage < lastPage) {
                                 currentTableIndex += itemCountPerPage;
-                                itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage));
+                                itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
                                 itemContainer.refreshItems();
                                 table.setPageLength(itemCountPerPage);
                             }
@@ -307,7 +307,7 @@ public class DataTable<C> extends VerticalLayout {
                     int currentPage = currentTableIndex / itemCountPerPage;
                     if (currentPage < lastPage) {
                         currentTableIndex = lastPage * itemCountPerPage;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
                         itemContainer.refreshItems();
                         table.setPageLength(itemCountPerPage);
                     }
@@ -331,9 +331,9 @@ public class DataTable<C> extends VerticalLayout {
                             }
                             orderBy = column;
 
-                            Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage);
+                            Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
                             if (tableData.isEmpty()) {
-                                tableData.add(dao.createNew());
+                                tableData.add(dao.createNew(SecurityUtils.getCurrentTenant()));
                             }
                             itemContainer.setBeans(tableData);
                             itemContainer.refreshItems();

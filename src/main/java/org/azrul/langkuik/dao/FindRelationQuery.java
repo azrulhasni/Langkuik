@@ -39,14 +39,14 @@ public class FindRelationQuery<P, C> implements DAOQuery<P, C>, Serializable {
     }
     
      @Override
-    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset) {
+    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
         this.emf = emf; 
         return getAllDependants(getParameter().getParentObject()
                  ,getParameter().getParentToCurrentField(), orderBy, asc, startIndex, offset);
      }
 
     @Override
-    public Long count(EntityManagerFactory emf) {
+    public Long count(EntityManagerFactory emf, String tenantId) {
         this.emf = emf;
         return countDependants(getParameter().getParentObject()
                  ,getParameter().getParentToCurrentField());

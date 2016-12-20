@@ -6,11 +6,13 @@
 package org.azrul.langkuik.dao;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import org.azrul.langkuik.dao.DAOQuery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
@@ -44,14 +46,14 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
     }
     
     
-    public Collection doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset){
+    public Collection doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset, String tenantId){
         this.emf = emf; 
-        return search(getSearchTerms(), getSearchClass(), orderBy, asc, startIndex, offset);
+        return search(getSearchTerms(), getSearchClass(), orderBy, asc, startIndex, offset, tenantId);
     }
     
-    public Long count(EntityManagerFactory emf){
+    public Long count(EntityManagerFactory emf, String tenantId){
         this.emf = emf;
-         return countSearch(getSearchTerms(), getSearchClass());
+         return countSearch(getSearchTerms(), getSearchClass(),tenantId);
     }
     
     public void clearSearchTerms() {
@@ -91,20 +93,20 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
     }
 
 
-    private Long countSearch(Collection<SearchTerm> searchTerms, Class<T> daoClass) {
+    private Long countSearch(Collection<SearchTerm> searchTerms, Class<T> daoClass, String tenantId) {
         if (searchTerms == null || searchTerms.isEmpty()) {
-            return countAll(daoClass);
+            return countAll(daoClass, tenantId);
         }
         EntityManager em = emf.createEntityManager();
 
         FullTextEntityManager fullTextEntityManager = org.hibernate.search.jpa.Search.getFullTextEntityManager(em);
 
-        org.apache.lucene.search.Query luceneQuery = buildSearchQuery(fullTextEntityManager, daoClass, searchTerms);
+        org.apache.lucene.search.Query luceneQuery = buildSearchQuery(fullTextEntityManager, daoClass, searchTerms, tenantId, EntityUtils.getTenantFieldName(daoClass));
         FullTextQuery ftQuery = fullTextEntityManager.createFullTextQuery(luceneQuery, daoClass);
         return new Long(ftQuery.getResultSize());
     }
 
-    private Collection<T> getAll(Class<T> daoClass, String orderBy, boolean asc, int startIndex, int offset) {
+    private Collection<T> getAll(Class<T> daoClass, String orderBy, boolean asc, int startIndex, int offset,  String tenantId) {
         EntityManager em = emf.createEntityManager();
 
 //        ClassMetadata classMetadata = ((Session) em.getDelegate()).getSessionFactory().getClassMetadata(daoClass);
@@ -115,14 +117,30 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
         javax.persistence.criteria.CriteriaQuery<T> criteria = cb.createQuery(daoClass);
 
         Root<T> root = criteria.from(daoClass);
-
-        if (orderBy == null) {
-            criteria.select(root).orderBy(cb.asc(root.get(childId)));
-        } else {
-            if (asc == true) {
-                criteria.select(root).orderBy(cb.asc(root.get(orderBy)));
+        //add tenant
+        //--find tenant field
+        Field tenantIdField = EntityUtils.getTenantFieldName(daoClass);
+        
+        //add order and tenant
+        if (tenantIdField!=null){
+             if (orderBy == null) {
+                criteria.select(root).where(cb.equal(root.get(tenantIdField.getName()), tenantId)).orderBy(cb.asc(root.get(childId)));
             } else {
-                criteria.select(root).orderBy(cb.desc(root.get(orderBy)));
+                if (asc == true) {
+                    criteria.select(root).where(cb.equal(root.get(tenantIdField.getName()), tenantId)).orderBy(cb.asc(root.get(orderBy)));
+                } else {
+                    criteria.select(root).where(cb.equal(root.get(tenantIdField.getName()), tenantId)).orderBy(cb.desc(root.get(orderBy)));
+                }
+            }
+        }else{
+            if (orderBy == null) {
+                criteria.select(root).orderBy(cb.asc(root.get(childId)));
+            } else {
+                if (asc == true) {
+                    criteria.select(root).orderBy(cb.asc(root.get(orderBy)));
+                } else {
+                    criteria.select(root).orderBy(cb.desc(root.get(orderBy)));
+                }
             }
         }
         Collection<T> results = em.createQuery(criteria).setFirstResult(startIndex).setMaxResults(offset).getResultList();
@@ -131,26 +149,30 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
         return results;
     }
 
-    private Collection<T> searchAll(Class<T> daoClass) {
-
+//    private Collection<T> searchAll(Class<T> daoClass, String tenantId) {
+//
+//        EntityManager em = emf.createEntityManager();
+//
+//        FullTextEntityManager fullTextEntityManager = org.hibernate.search.jpa.Search.getFullTextEntityManager(em);
+//        QueryBuilder qb = fullTextEntityManager.getSearchFactory()
+//                .buildQueryBuilder().forEntity(daoClass).get();
+//        org.apache.lucene.search.Query luceneQuery = qb.all().createQuery();
+//
+//        Query jpaQuery = fullTextEntityManager.createFullTextQuery(luceneQuery, daoClass);
+//        
+//        List<T> results = jpaQuery.getResultList();
+//        fullTextEntityManager.close();
+//
+//        return results;
+//
+//    }
+//
+    private Long countAll(Class<T> daoClass, String tenantId) {
         EntityManager em = emf.createEntityManager();
-
-        FullTextEntityManager fullTextEntityManager = org.hibernate.search.jpa.Search.getFullTextEntityManager(em);
-        QueryBuilder qb = fullTextEntityManager.getSearchFactory()
-                .buildQueryBuilder().forEntity(daoClass).get();
-        org.apache.lucene.search.Query luceneQuery = qb.all().createQuery();
-
-        Query jpaQuery = fullTextEntityManager.createFullTextQuery(luceneQuery, daoClass);
-
-        List<T> results = jpaQuery.getResultList();
-        fullTextEntityManager.close();
-
-        return results;
-
-    }
-
-    private Long countAll(Class<T> daoClass) {
-        EntityManager em = emf.createEntityManager();
+        
+        //add tenant
+        //--find tenant field
+        Field tenantIdField = EntityUtils.getTenantFieldName(daoClass);
 
         ClassMetadata classMetadata = ((Session) em.getDelegate()).getSessionFactory().getClassMetadata(daoClass);
         String childId = classMetadata.getIdentifierPropertyName();
@@ -159,16 +181,20 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
         javax.persistence.criteria.CriteriaQuery<Long> criteria = cb.createQuery(Long.TYPE);
         Root<T> root = criteria.from(daoClass);
 
-        criteria.select(cb.count(root.get(childId)));
+        if (tenantIdField!=null){
+               criteria.select(cb.count(root.get(childId))).where(cb.equal(root.get(tenantIdField.getName()), tenantId)); 
+        }else{
+            criteria.select(cb.count(root.get(childId)));
+        }
         Long size = em.createQuery(criteria).getSingleResult();
 
         em.close();
         return size;
     }
 
-    private Collection<T> search(Collection<SearchTerm> searchTerms, Class<T> daoClass, String orderBy, boolean asc, int startIndex, int offset) {
+    private Collection<T> search(Collection<SearchTerm> searchTerms, Class<T> daoClass, String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
         if (searchTerms == null || searchTerms.isEmpty()) {
-            return getAll(daoClass, orderBy, asc, startIndex, offset);
+            return getAll(daoClass, orderBy, asc, startIndex, offset, tenantId);
         }
         try {
             EntityManager em = emf.createEntityManager();
@@ -178,7 +204,7 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
             //Session session = (Session) em.getDelegate();
             //String currentIdField = session.getSessionFactory().getClassMetadata(daoClass).getIdentifierPropertyName();
             String currentIdField = EntityUtils.getIdentifierFieldName(searchClass, emf);
-            org.apache.lucene.search.Query luceneQuery = buildSearchQuery(fullTextEntityManager, daoClass, searchTerms);
+            org.apache.lucene.search.Query luceneQuery = buildSearchQuery(fullTextEntityManager, daoClass, searchTerms,tenantId,EntityUtils.getTenantFieldName(daoClass));
             Sort sort = Sort.INDEXORDER;
             if (orderBy == null) {
                 if (Long.TYPE.equals(daoClass.getDeclaredField(currentIdField).getType())) {
@@ -198,11 +224,14 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
                 }
             }
 
-            Query jpaQuery = fullTextEntityManager.createFullTextQuery(luceneQuery, daoClass).setSort(sort).setFirstResult(startIndex).setMaxResults(offset);
+            Query jpaQuery = fullTextEntityManager.createFullTextQuery(luceneQuery, daoClass)
+                    .setSort(sort)
+                    .setFirstResult(startIndex)
+                    .setMaxResults(offset);
 
             List<T> results = jpaQuery.getResultList();
             fullTextEntityManager.close();
-            Collection<T> allRes = searchAll(daoClass); //colllateral id 65
+            //Collection<T> allRes = searchAll(daoClass); //colllateral id 65
 
             return results;
         } catch (NoSuchFieldException ex) {
@@ -212,7 +241,7 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
         return new ArrayList<T>();
     }
 
-    private org.apache.lucene.search.Query buildSearchQuery(FullTextEntityManager fullTextEntityManager, Class<T> daoClass, Collection<SearchTerm> searchTerms) {
+    private org.apache.lucene.search.Query buildSearchQuery(FullTextEntityManager fullTextEntityManager, Class<T> daoClass, Collection<SearchTerm> searchTerms, String tenantId, Field tenantField) {
         QueryBuilder qb = fullTextEntityManager.getSearchFactory()
                 .buildQueryBuilder().forEntity(daoClass).get();
         BooleanJunction bj = qb.bool();
@@ -228,6 +257,9 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
                     bj.must(qb.keyword().fuzzy().onField(entry.getFieldName()).matching(entry.getValue()).createQuery());
                 }
             }
+        }
+        if (tenantField!=null){
+            bj.must(qb.keyword().onField(tenantField.getName()).matching(tenantId).createQuery());
         }
         org.apache.lucene.search.Query luceneQuery = bj.createQuery();
         return luceneQuery;

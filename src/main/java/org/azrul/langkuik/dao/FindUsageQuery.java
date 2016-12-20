@@ -49,13 +49,13 @@ public class FindUsageQuery<P, C> implements DAOQuery<P, C>, Serializable {
 
     
      @Override
-    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset) {
+    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
         this.emf = emf;
         return findUsage(getCurrentBean(),getParentClass(), orderBy, asc, startIndex, offset);
     }
 
     @Override
-    public Long count(EntityManagerFactory emf) {
+    public Long count(EntityManagerFactory emf, String tenantId) {
         this.emf = emf;
        return countUsage(getCurrentBean(),getParentClass());
     }

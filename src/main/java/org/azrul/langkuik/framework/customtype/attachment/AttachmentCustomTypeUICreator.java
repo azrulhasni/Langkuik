@@ -41,6 +41,7 @@ import org.azrul.langkuik.framework.webgui.BeanView;
 
 import org.azrul.langkuik.framework.webgui.WebEntityItemContainer;
 import org.azrul.langkuik.security.role.FieldState;
+import org.azrul.langkuik.security.role.SecurityUtils;
 
 /**
  *
@@ -66,7 +67,7 @@ public class AttachmentCustomTypeUICreator<P> implements CustomTypeUICreator<P> 
                 currentBean, pojoFieldName, null, attachmentClass
         );
         FindRelationQuery<P, AttachmentCustomType> query = new FindRelationQuery(findRelationParameter);
-        final Collection<AttachmentCustomType> attachments = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")));
+        final Collection<AttachmentCustomType> attachments = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")),SecurityUtils.getCurrentTenant());
         //final Collection<AttachmentCustomType> attachments = attachmentDao.find(currentBean, pojoFieldName, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")));
 
         final WebEntityItemContainer attachmentIC = new WebEntityItemContainer(attachmentClass);
@@ -117,7 +118,7 @@ public class AttachmentCustomTypeUICreator<P> implements CustomTypeUICreator<P> 
                             currentBean, pojoFieldName, null, attachmentClass
                     );
                     FindRelationQuery<P, AttachmentCustomType> query = new FindRelationQuery(findRelationParameter);
-                    Collection<AttachmentCustomType> a = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")));
+                    Collection<AttachmentCustomType> a = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")),SecurityUtils.getCurrentTenant());
 
                     attachmentIC.removeAllItems();
                     attachmentIC.addAll(a);
@@ -293,7 +294,7 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
         attachmentFile.mkdirs();
         try (OutputStream output = new FileOutputStream(fullPath + File.separator + fileName)) {
             int bytesRead;
-            AttachmentCustomType attachment = (AttachmentCustomType) customTypeDao.createAndSave(attachmentClass);
+            AttachmentCustomType attachment = (AttachmentCustomType) customTypeDao.createAndSave(attachmentClass,SecurityUtils.getCurrentTenant());
 
             while ((bytesRead = input.read(buffer)) != -1) {
                 output.write(buffer, 0, bytesRead);
@@ -308,7 +309,7 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
                     currentBean, fieldName, null, attachmentClass
             );
             FindRelationQuery<P, AttachmentCustomType> query = new FindRelationQuery(findRelationParameter);
-            final Collection<AttachmentCustomType> attachments = customTypeDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")));
+            final Collection<AttachmentCustomType> attachments = customTypeDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")),SecurityUtils.getCurrentTenant());
 
             if (!attachments.isEmpty()) {
                 attachmentIC.addAll(attachments);

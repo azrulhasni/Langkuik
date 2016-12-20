@@ -29,5 +29,6 @@ public @interface WebField {
     FieldUserMap[] userMap() default {@FieldUserMap};
     
     boolean required() default false;
+    boolean tenantId() default false;
    
 }

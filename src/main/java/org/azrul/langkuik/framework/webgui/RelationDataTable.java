@@ -15,6 +15,7 @@ import org.azrul.langkuik.dao.FindRelationParameter;
 import org.azrul.langkuik.dao.FindRelationQuery;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.SecurityUtils;
 
 /**
  *
@@ -44,14 +45,14 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         P parentBean = dao.unlinkAndDelete(findRelationParameter, beans);
         findRelationParameter.setParentObject(parentBean);
         query.setParameter(findRelationParameter);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage);
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew());
+            data.add(dao.createNew(SecurityUtils.getCurrentTenant()));
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery);
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
         
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
@@ -69,14 +70,14 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         P parentBean = dao.unlink(findRelationParameter, beans);
         findRelationParameter.setParentObject(parentBean);
         query.setParameter(findRelationParameter);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage);
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew());
+            data.add(dao.createNew(SecurityUtils.getCurrentTenant()));
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery);
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
         
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
@@ -102,8 +103,8 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         }
         findRelationParameter.setParentObject(parent);
         query.setParameter(findRelationParameter);
-        bigTotal = dao.countQueryResult(daoQuery);
-        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage));
+        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
+        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
         itemContainer.refreshItems();
         int beanLastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
