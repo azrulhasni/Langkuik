@@ -15,7 +15,7 @@ import org.azrul.langkuik.dao.FindRelationParameter;
 import org.azrul.langkuik.dao.FindRelationQuery;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.security.role.EntityOperation;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
  *
@@ -31,11 +31,11 @@ public class RelationDataTable<P,C> extends DataTable<C> {
             Class<C> classOfBean, 
             DataAccessObject<C> dao, 
             int noBeansPerPage,  
-            final Set<String> currentUserRoles,
+            //final Set<String> currentUserRoles,
             final EntityOperation entityOperation,
             final PageParameter pageParameter) {
         this.findRelationParameter=findRelationParameter;
-        createTablePanel(daoQuery, classOfBean, dao, noBeansPerPage, currentUserRoles,entityOperation,pageParameter);
+        createTablePanel(daoQuery, classOfBean, dao, noBeansPerPage/*, currentUserRoles*/,entityOperation,pageParameter);
     }
     
     
@@ -45,14 +45,14 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         P parentBean = dao.unlinkAndDelete(findRelationParameter, beans);
         findRelationParameter.setParentObject(parentBean);
         query.setParameter(findRelationParameter);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew(SecurityUtils.getCurrentTenant()));
+            data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
         
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
@@ -70,14 +70,14 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         P parentBean = dao.unlink(findRelationParameter, beans);
         findRelationParameter.setParentObject(parentBean);
         query.setParameter(findRelationParameter);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew(SecurityUtils.getCurrentTenant()));
+            data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
         
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
@@ -103,8 +103,8 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         }
         findRelationParameter.setParentObject(parent);
         query.setParameter(findRelationParameter);
-        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
-        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
+        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
         itemContainer.refreshItems();
         int beanLastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {

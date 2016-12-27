@@ -31,7 +31,7 @@ import org.azrul.langkuik.dao.HibernateGenericDAO;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.audit.AuditedEntity;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
  *
@@ -63,10 +63,10 @@ public class AuditTrailView<C> extends VerticalView {
         BeanUtils beanUtils = new BeanUtils();
 
         //determine user details
-        Set<String> currentUserRoles = SecurityUtils.getCurrentUserRoles();
+        //Set<String> currentUserRoles = UserSecurityUtils.getCurrentUserRoles();
 
         //determine entity rights 
-        if (SecurityUtils.isCurrentUserAuditViewer(pageParameter.getConfig()) == false) {
+        if (UserSecurityUtils.isCurrentUserAuditViewer(pageParameter.getConfig()) == false) {
             return;
         }
 
@@ -99,7 +99,7 @@ public class AuditTrailView<C> extends VerticalView {
                 classOfEntity,
                 dao,
                 noEntriesPerPage,
-                currentUserRoles,
+                /*currentUserRoles,*/
                 pageParameter,
                 "");
         final PopupDateField startingFromField = new PopupDateField();

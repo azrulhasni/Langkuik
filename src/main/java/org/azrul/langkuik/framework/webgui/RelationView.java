@@ -27,7 +27,7 @@ import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.RelationState;
 import org.azrul.langkuik.security.role.EntityOperation;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.vaadin.dialogs.ConfirmDialog;
 
 /**
@@ -89,10 +89,10 @@ public class RelationView<P, C> extends VerticalView {
         this.removeAllComponents();
 
         //get user roles
-        final Set<String> currentUserRoles = SecurityUtils.getCurrentUserRoles();
+        //final Set<String> currentUserRoles = UserSecurityUtils.getCurrentUserRoles();
 
         //determine entity rights 
-        final EntityOperation entityRight = SecurityUtils.getEntityRight(classOfBean, currentUserRoles);
+        final EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
         if (entityRight == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
             //Not accessible
             return;
@@ -137,7 +137,7 @@ public class RelationView<P, C> extends VerticalView {
                     classOfBean,
                     dao,
                     noBeansPerPage,
-                    currentUserRoles,
+                    //currentUserRoles,
                     entityRight,
                     pageParameter);
 
@@ -156,7 +156,7 @@ public class RelationView<P, C> extends VerticalView {
                                 classOfBean,
                                 dao,
                                 noBeansPerPage,
-                                currentUserRoles,
+                                //currentUserRoles,
                                 entityRight,
                                 pageParameter);
                         form.addComponent(allDataTableLayout);
@@ -226,13 +226,13 @@ public class RelationView<P, C> extends VerticalView {
         HorizontalLayout buttonLayout = new HorizontalLayout();
         if (parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN)) {
 
-            if (beanUtils.isCreatable(classOfBean, currentUserRoles)) {
+            if (beanUtils.isCreatable(classOfBean/*, currentUserRoles*/)) {
                 Button addNewBtn = new Button(pageParameter.getLocalisedText("form.general.button.addNew"),
                         new Button.ClickListener() {
                             @Override
                             public void buttonClick(Button.ClickEvent event
                             ) {
-                                C currentBean = dao.createNew(SecurityUtils.getCurrentTenant());//dao.createAndSave(parentBean, parentToBeanField, pageParameter.getRelationManagerFactory().create((Class<P>) parentBean.getClass(), classOfBean));
+                                C currentBean = dao.createNew(UserSecurityUtils.getCurrentTenant());//dao.createAndSave(parentBean, parentToBeanField, pageParameter.getRelationManagerFactory().create((Class<P>) parentBean.getClass(), classOfBean));
                                 BeanView<P, C> beanView = new BeanView<P, C>(currentBean, parentBean, parentToBeanField, pageParameter);
                                 String targetView = "CHOOSE_ONE_TABLE_VIEW_" + UUID.randomUUID().toString();
                                 WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
@@ -251,7 +251,7 @@ public class RelationView<P, C> extends VerticalView {
         if (parentToBeanRelationState.equals(RelationState.EDIT_CHILDREN)
                 || parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN)) {
 
-            if (beanUtils.isEditable(classOfBean, currentUserRoles) || beanUtils.isViewable(classOfBean, currentUserRoles)) {
+            if (beanUtils.isEditable(classOfBean/*, currentUserRoles*/) || beanUtils.isViewable(classOfBean/*, currentUserRoles*/)) {
                 Button manageBtn = new Button(pageParameter.getLocalisedText("form.general.button.manage", ""),
                         new Button.ClickListener() {
                             @Override
@@ -276,7 +276,7 @@ public class RelationView<P, C> extends VerticalView {
         if (parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN)
                 || parentToBeanRelationState.equals(RelationState.DELETE_CHILDREN)) {
 
-            if (beanUtils.isCreatable(classOfBean, currentUserRoles)) {
+            if (beanUtils.isCreatable(classOfBean/*, currentUserRoles*/)) {
                 Button deleteBtn = new Button(pageParameter.getLocalisedText("form.general.button.delete"),
                         new Button.ClickListener() {
                             @Override

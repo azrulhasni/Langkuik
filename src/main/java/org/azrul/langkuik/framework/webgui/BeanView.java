@@ -73,7 +73,7 @@ import org.azrul.langkuik.security.role.RelationState;
 import org.azrul.langkuik.dao.EntityUtils;
 import org.azrul.langkuik.framework.audit.AuditedEntity;
 import org.azrul.langkuik.framework.audit.AuditedField;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 
@@ -117,8 +117,8 @@ public class BeanView<P, C> extends VerticalView {
         //reset form
         this.removeAllComponents();
 
-        final Set<String> currentUserRoles = SecurityUtils.getCurrentUserRoles();
-        EntityOperation entityRight = determineEntityRight(currentBean.getClass(), currentUserRoles);
+        //final Set<String> currentUserRoles = UserSecurityUtils.getCurrentUserRoles();
+        EntityOperation entityRight = determineEntityRight(currentBean.getClass()/*, currentUserRoles*/);
         if (entityRight == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
             //Not accessible
             return;
@@ -158,7 +158,7 @@ public class BeanView<P, C> extends VerticalView {
         //render form according to tab
         if (groups.size() == 1) {
             createForm(entityRight,
-                    currentUserRoles,
+                    /*currentUserRoles,*/
                     groups,
                     fieldGroup,
                     //relations,
@@ -178,7 +178,7 @@ public class BeanView<P, C> extends VerticalView {
             for (String group : groups.keySet()) {
                 if (("All").equals(group)) {
                     createForm(entityRight,
-                            currentUserRoles,
+                            /*currentUserRoles,*/
                             groups,
                             group,
                             fieldGroup,
@@ -189,7 +189,7 @@ public class BeanView<P, C> extends VerticalView {
                 } else {
                     FormLayout tab = new FormLayout();
                     createForm(entityRight,
-                            currentUserRoles,
+                            /*currentUserRoles,*/
                             groups,
                             group,
                             fieldGroup,
@@ -216,7 +216,7 @@ public class BeanView<P, C> extends VerticalView {
                         try {
                             fieldGroup.commit();
                             currentBean = (C) fieldGroup.getItemDataSource().getBean();
-                            currentBean = saveBean(currentBean, parentBean, beanUtils, currentUserRoles);
+                            currentBean = saveBean(currentBean, parentBean, beanUtils/*currentUserRoles,*/);
                             if (!pageParameter.getHistory().isEmpty()) {
                                 String currentView = pageParameter.getHistory().pop().getViewHandle();
                                 String lastView = pageParameter.getHistory().peek().getViewHandle();
@@ -242,7 +242,7 @@ public class BeanView<P, C> extends VerticalView {
                                 try {
                                     fieldGroup.commit();
                                     currentBean = (C) fieldGroup.getItemDataSource().getBean();
-                                    currentBean = saveBean(currentBean, parentBean, beanUtils, currentUserRoles);
+                                    currentBean = saveBean(currentBean, parentBean, beanUtils/*currentUserRoles,*/);
                                     FindUsageView<C> findUsageDataTableView = new FindUsageView<>(pageParameter, currentBean);
                                     String targetView = "FIND_USAGE_TABLE_VIEW_" + UUID.randomUUID().toString();
                                     WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
@@ -262,7 +262,7 @@ public class BeanView<P, C> extends VerticalView {
 
         //Audit trail
         if (currentBean != null && dao.isAuditable(currentBean.getClass()) && 
-                SecurityUtils.isCurrentUserAuditViewer(pageParameter.getConfig())==true) {
+                UserSecurityUtils.isCurrentUserAuditViewer(pageParameter.getConfig())==true) {
             
             Button auditTrailBtn = new Button(pageParameter.getLocalisedText("form.general.button.auditTrail"),
                     new Button.ClickListener() {
@@ -271,7 +271,7 @@ public class BeanView<P, C> extends VerticalView {
                             try {
                                 fieldGroup.commit();
                                 currentBean = (C) fieldGroup.getItemDataSource().getBean();
-                                currentBean = saveBean(currentBean, parentBean, beanUtils, currentUserRoles);
+                                currentBean = saveBean(currentBean, parentBean, beanUtils/*, currentUserRoles*/);
                                 
                                 AuditTrailView auditTrailView = new AuditTrailView(currentBean,currentBean.getClass(),3,pageParameter);
                                 String targetView = "AUDIT_VIEW_" + UUID.randomUUID().toString();
@@ -294,13 +294,13 @@ public class BeanView<P, C> extends VerticalView {
         this.addComponent(form);
     }
 
-    private EntityOperation determineEntityRight(final Class aclass,
-            final Set<String> currentUserRoles) {
+    private EntityOperation determineEntityRight(final Class aclass/*,
+            final Set<String> currentUserRoles*/) {
         //determine entity rights
         EntityOperation entityRight = null;
         EntityUserMap[] entityUserMaps = ((WebEntity) aclass.getAnnotation(WebEntity.class)).userMap();
         for (EntityUserMap e : entityUserMaps) {
-            if (currentUserRoles.contains(e.role()) || ("*").equals(e.role())) {
+            if (UserSecurityUtils.hasRole(e.role()) || ("*").equals(e.role())) {
                 entityRight = e.right();
                 break;
             }
@@ -309,17 +309,17 @@ public class BeanView<P, C> extends VerticalView {
     }
 
     private void createForm(EntityOperation entityRight,
-            final Set<String> currentUserRoles,
+            /*final Set<String> currentUserRoles,*/
             final Map<String, Map<Integer, FieldContainer>> groups,
             final BeanFieldGroup fieldGroup,
             //final Map<Integer, RelationContainer> relations,
             final List<DataAccessObject<?>> customTypeDaos, Navigator nav,
             final FormLayout form) throws FieldGroup.BindException, UnsupportedOperationException {
-        createForm(entityRight, currentUserRoles, groups, null, fieldGroup, customTypeDaos, nav, form);
+        createForm(entityRight, /*currentUserRoles,*/groups, null, fieldGroup, customTypeDaos, nav, form);
     }
 
     private void createForm(EntityOperation entityRight,
-            final Set<String> currentUserRoles,
+            /*final Set<String> currentUserRoles,*/
             final Map<String, Map<Integer, FieldContainer>> groups,
             String group,
             final BeanFieldGroup fieldGroup,
@@ -350,7 +350,7 @@ public class BeanView<P, C> extends VerticalView {
         everyField:
         for (Map.Entry<Integer, FieldContainer> entry : fieldContainerMap.entrySet()) {
             final FieldContainer fieldContainer = entry.getValue();
-            final FieldState effectiveFieldState = beanUtils.calculateEffectiveFieldState(fieldContainer.getPojoField(), currentUserRoles, entityRight);
+            final FieldState effectiveFieldState = beanUtils.calculateEffectiveFieldState(fieldContainer.getPojoField(),/*currentUserRoles,*/entityRight);
 
             //Create form
             if (FieldState.INVISIBLE.equals(effectiveFieldState)) {
@@ -436,7 +436,7 @@ public class BeanView<P, C> extends VerticalView {
                         }
                     }
                 }
-                EntityOperation rightOfField = determineEntityRight(classOfField, currentUserRoles);
+                EntityOperation rightOfField = determineEntityRight(classOfField/*, currentUserRoles*/);
                 if (rightOfField == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
                     //Not accessible
                     rightOfField = EntityOperation.RESTRICTED;
@@ -448,7 +448,7 @@ public class BeanView<P, C> extends VerticalView {
                             try {
                                 fieldGroup.commit();
                                 C cBean = (C) fieldGroup.getItemDataSource().getBean();
-                                currentBean = saveBean(cBean,parentBean,beanUtils,currentUserRoles);
+                                currentBean = saveBean(cBean,parentBean,beanUtils/*,currentUserRoles*/);
                                 
 //                                 fieldGroup.commit();
 //                                    currentBean = (C) fieldGroup.getItemDataSource().getBean();
@@ -510,7 +510,7 @@ public class BeanView<P, C> extends VerticalView {
                     form.addComponent(openCustom);
 
                 } else { 
-                    processRelationship(fieldContainer, beanUtils, currentUserRoles, entityRight, rightOfField, fieldGroup, nav, form);
+                    processRelationship(fieldContainer, beanUtils, /*currentUserRoles,*/ entityRight, rightOfField, fieldGroup, nav, form);
                 }
 
             } else {
@@ -571,14 +571,14 @@ public class BeanView<P, C> extends VerticalView {
         }
     }
 
-    public void processRelationship(final FieldContainer fieldContainer, final BeanUtils beanUtils, final Set<String> currentUserRoles, EntityOperation entityRight, EntityOperation rightOfField, final BeanFieldGroup fieldGroup, final Navigator nav, final FormLayout form) throws SecurityException {
+    public void processRelationship(final FieldContainer fieldContainer, final BeanUtils beanUtils, /*final Set<String> currentUserRoles,*/ EntityOperation entityRight, EntityOperation rightOfField, final BeanFieldGroup fieldGroup, final Navigator nav, final FormLayout form) throws SecurityException {
         //relationship
         try {
             fieldContainer.getPojoField().setAccessible(true);
             final WebField relation = fieldContainer.getPojoField().getAnnotation(WebField.class);
             
             Button relationshipButton = null;
-            final RelationState effectiveRelationState = beanUtils.calculateEffectiveRelationState(fieldContainer.getPojoField(), currentUserRoles, entityRight, rightOfField);
+            final RelationState effectiveRelationState = beanUtils.calculateEffectiveRelationState(fieldContainer.getPojoField(), /*currentUserRoles,*/ entityRight, rightOfField);
             if (fieldContainer.getPojoField().isAnnotationPresent(OneToMany.class)) {
                 relationshipButton = new Button(pageParameter.getLocalisedText("form.general.button.manage", relation.name()),
                         new Button.ClickListener() {
@@ -590,8 +590,8 @@ public class BeanView<P, C> extends VerticalView {
                                     currentBean = (C) fieldGroup.getItemDataSource().getBean();
                                     currentBean = saveBean(currentBean,
                                             parentBean,
-                                            beanUtils,
-                                            currentUserRoles);
+                                            beanUtils/*,
+                                            currentUserRoles*/);
                                     
                                     Class classOfField = (Class) ((ParameterizedType) fieldContainer.getPojoField().getGenericType()).getActualTypeArguments()[0];
                                     RelationView view = new RelationView(currentBean,
@@ -624,8 +624,8 @@ public class BeanView<P, C> extends VerticalView {
                                     currentBean = (C) fieldGroup.getItemDataSource().getBean();
                                     currentBean = saveBean(currentBean,
                                             parentBean,
-                                            beanUtils,
-                                            currentUserRoles);
+                                            beanUtils/*,
+                                            currentUserRoles*/);
                                     
                                     RelationView view = new RelationView(currentBean,
                                             fieldContainer.getPojoField().getName(),
@@ -656,8 +656,8 @@ public class BeanView<P, C> extends VerticalView {
                                     currentBean = (C) fieldGroup.getItemDataSource().getBean();
                                     currentBean = saveBean(currentBean,
                                             parentBean,
-                                            beanUtils,
-                                            currentUserRoles);
+                                            beanUtils/*,
+                                            currentUserRoles*/);
                                     
                                     Class classOfField = (Class) ((ParameterizedType) fieldContainer.getPojoField().getGenericType()).getActualTypeArguments()[0];
                                     RelationView view = new RelationView(currentBean,
@@ -685,9 +685,9 @@ public class BeanView<P, C> extends VerticalView {
         }
     }
 
-    private C saveBean(C bean, P pbean, BeanUtils beanUtils,
-            Set<String> currentUserRoles) {
-        if (beanUtils.isEditable(bean.getClass(), currentUserRoles) || beanUtils.isCreatable(bean.getClass(), currentUserRoles)) {
+    private C saveBean(C bean, P pbean, BeanUtils beanUtils/*,
+            Set<String> currentUserRoles*/) {
+        if (beanUtils.isEditable(bean.getClass()/*, currentUserRoles*/) || beanUtils.isCreatable(bean.getClass()/*, currentUserRoles*/)) {
             if (pbean == null) {
                 return dao.save(bean);
             } else {

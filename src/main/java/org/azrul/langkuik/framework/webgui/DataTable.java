@@ -33,7 +33,7 @@ import org.azrul.langkuik.dao.EntityUtils;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.security.role.EntityOperation;
 import org.azrul.langkuik.security.role.FieldState;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 public class DataTable<C> extends VerticalLayout {
 
@@ -60,7 +60,7 @@ public class DataTable<C> extends VerticalLayout {
     }
     
     public void refresh(){
-       itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
+       itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
        itemContainer.refreshItems();
     }
     
@@ -79,7 +79,7 @@ public class DataTable<C> extends VerticalLayout {
             final Class<C> classOfBean,
             final DataAccessObject<C> dao,
             final int noBeansPerPage,
-            final Set<String> currentUserRoles,
+            /*final Set<String> currentUserRoles,*/
             final EntityOperation entityOperation,
             final PageParameter pageParameter,
             final boolean doNotDrawIfEmpty,
@@ -91,8 +91,8 @@ public class DataTable<C> extends VerticalLayout {
         this.pageParameter = pageParameter;
         this.htmlTableLabel = htmlTableLabel;
 
-        Collection<C> allData = dao.runQuery(daoQuery, null, true, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
-        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
+        Collection<C> allData = dao.runQuery(daoQuery, null, true, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
 
         boolean draw = true;
         if (doNotDrawIfEmpty == false && allData.isEmpty() == true) {
@@ -117,7 +117,7 @@ public class DataTable<C> extends VerticalLayout {
             //if we need to still draw when table is empty, we need to still put one element in there
             //Vaadin limitation
             if (allData.isEmpty()) {
-                allData.add(dao.createNew(false,SecurityUtils.getCurrentTenant()));
+                allData.add(dao.createNew(false,UserSecurityUtils.getCurrentTenant()));
             }
 
             //Put all data of type T into a table to be chosen
@@ -134,14 +134,14 @@ public class DataTable<C> extends VerticalLayout {
                 if (field.getType().isAssignableFrom(Collection.class)) {//only support simple Java objects
                     continue;
                 }
-                FieldState fieldState = beanUtils.calculateEffectiveFieldState(field, currentUserRoles, entityOperation);
+                FieldState fieldState = beanUtils.calculateEffectiveFieldState(field/*, currentUserRoles*/, entityOperation);
                 if (fieldState.equals(FieldState.EDITABLE)
                         || fieldState.equals(FieldState.READ_ONLY)) {
 
                     //r = webField.rank();
                     if (EntityUtils.isManagedEntity(field.getType(), pageParameter.getEntityManagerFactory())) {
                         if (webField.allowNested() == true) {
-                            EntityOperation nestedEntityRight = SecurityUtils.getEntityRight(field.getType(), currentUserRoles);
+                            EntityOperation nestedEntityRight = UserSecurityUtils.getEntityRight(field.getType()/*, currentUserRoles*/);
                             if (nestedEntityRight != null) {
                                 for (Field nestedField : field.getType().getDeclaredFields()) {
                                     WebField nestedWebField = null;
@@ -160,7 +160,7 @@ public class DataTable<C> extends VerticalLayout {
                                         continue; //cannot have nested of nested. Only 1 level of nested is allowed
                                     }
 
-                                    FieldState nestedComponentState = beanUtils.calculateEffectiveFieldState(nestedField, currentUserRoles, nestedEntityRight);
+                                    FieldState nestedComponentState = beanUtils.calculateEffectiveFieldState(nestedField/*, currentUserRoles*/, nestedEntityRight);
                                     if (nestedComponentState.equals(FieldState.EDITABLE)
                                             || nestedComponentState.equals(FieldState.READ_ONLY)) {
                                         orderByColumns.put(Double.valueOf((double) webField.rank())
@@ -240,7 +240,7 @@ public class DataTable<C> extends VerticalLayout {
 
                     if (currentTableIndex > 0) {
                         currentTableIndex = 0;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
                         itemContainer.refreshItems();
                         table.setPageLength(itemCountPerPage);
                     }
@@ -261,7 +261,7 @@ public class DataTable<C> extends VerticalLayout {
                     }
                     if (currentTableIndex > 0) {
                         currentTableIndex -= itemCountPerPage;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
                         itemContainer.refreshItems();
                         table.setPageLength(itemCountPerPage);
                     }
@@ -285,7 +285,7 @@ public class DataTable<C> extends VerticalLayout {
                             int currentPage = currentTableIndex / itemCountPerPage;
                             if (currentPage < lastPage) {
                                 currentTableIndex += itemCountPerPage;
-                                itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
+                                itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
                                 itemContainer.refreshItems();
                                 table.setPageLength(itemCountPerPage);
                             }
@@ -307,7 +307,7 @@ public class DataTable<C> extends VerticalLayout {
                     int currentPage = currentTableIndex / itemCountPerPage;
                     if (currentPage < lastPage) {
                         currentTableIndex = lastPage * itemCountPerPage;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant()));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
                         itemContainer.refreshItems();
                         table.setPageLength(itemCountPerPage);
                     }
@@ -331,9 +331,9 @@ public class DataTable<C> extends VerticalLayout {
                             }
                             orderBy = column;
 
-                            Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,SecurityUtils.getCurrentTenant());
+                            Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
                             if (tableData.isEmpty()) {
-                                tableData.add(dao.createNew(SecurityUtils.getCurrentTenant()));
+                                tableData.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
                             }
                             itemContainer.setBeans(tableData);
                             itemContainer.refreshItems();
@@ -407,14 +407,14 @@ public class DataTable<C> extends VerticalLayout {
             final Class<C> classOfBean,
             final DataAccessObject<C> dao,
             final int noBeansPerPage,
-            final Set<String> currentUserRoles,
+            /*final Set<String> currentUserRoles,*/
             final EntityOperation entityRight,
             final PageParameter pageParameter) {
         createTablePanel(parameter,
                 classOfBean,
                 dao,
                 noBeansPerPage,
-                currentUserRoles,
+                /*currentUserRoles,*/
                 entityRight,
                 pageParameter,
                 true,

@@ -3,17 +3,21 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.azrul.langkuik;
 
 import org.azrul.langkuik.framework.WorkType;
 import com.vaadin.navigator.Navigator;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
-import com.vaadin.server.VaadinService;
+import com.vaadin.ui.AbstractComponentContainer;
+import com.vaadin.ui.Button;
+import com.vaadin.ui.Button.ClickListener;
+import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.Notification;
+import com.vaadin.ui.PasswordField;
+import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import java.io.Serializable;
@@ -21,10 +25,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import javax.persistence.EntityManagerFactory;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.azrul.langkuik.annotations.WebEntity;
 import org.azrul.langkuik.configs.Configuration;
 import org.azrul.langkuik.dao.DataAccessObject;
@@ -37,48 +41,178 @@ import org.azrul.langkuik.framework.webgui.BeanView;
 import org.azrul.langkuik.framework.webgui.SearchResultView;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.vaadin.dialogs.ConfirmDialog;
 
-public class Langkuik implements Serializable{
-    
-     public void initLangkuik(final EntityManagerFactory emf, 
-             final UI ui, 
-             final RelationManagerFactory relationManagerFactory) {
-         List<Class<?>> customTypeInterfaces = new ArrayList<>();
-         initLangkuik(emf,ui,relationManagerFactory,customTypeInterfaces);
-     }
-     
-     public void massIndex(final EntityManagerFactory emf){
-         HibernateGenericDAO.massIndexDatabaseForSearch(emf);
-     }
-     
-  
+public class Langkuik implements Serializable {
+    private EntityManagerFactory emf = null;
+    private UI ui = null;
+    private RelationManagerFactory relationManagerFactory=null;
+    private List<Class<?>> customTypeInterfaces=null;
+    private AbstractComponentContainer loginPage=null;
+    private ResourceBundle textResourceBundle=null;
 
-    public void initLangkuik(final EntityManagerFactory emf, 
-            final UI ui, 
-            final RelationManagerFactory relationManagerFactory, 
-            List<Class<?>> customTypeInterfaces) {
+    //all parameters
+    public Langkuik(final EntityManagerFactory emf,
+            final UI ui,
+            final RelationManagerFactory relationManagerFactory,
+            final List<Class<?>> customTypeInterfaces,
+            final AbstractComponentContainer loginPage,
+            final ResourceBundle textResourceBundle)  {
+        this.emf = emf;
+        this.ui = ui;
+        this.relationManagerFactory = relationManagerFactory;
+        this.customTypeInterfaces = customTypeInterfaces;
+        this.loginPage = loginPage;
+        this.textResourceBundle =textResourceBundle;
+    }
+    
+    
+    //default login page (single or multi tenant)
+    public Langkuik(final EntityManagerFactory emf,
+            final UI ui,
+            final RelationManagerFactory relationManagerFactory,
+            final List<Class<?>> customTypeInterfaces,
+            final ResourceBundle textResourceBundle,
+            final Boolean isMultiTenant)  {
+        this.emf = emf;
+        this.ui = ui;
+        this.relationManagerFactory = relationManagerFactory;
+        this.customTypeInterfaces = customTypeInterfaces;
+        if (Boolean.TRUE.equals(isMultiTenant)){
+            this.loginPage = getMultiTenantLoginForm();
+        }else{
+            this.loginPage = getSingleTenantLoginForm();
+        }
+        this.textResourceBundle =textResourceBundle;
         
+    }
+    
+    //default login page (single or multi tenant) and default text
+    public Langkuik(final EntityManagerFactory emf,
+            final UI ui,
+            final RelationManagerFactory relationManagerFactory,
+            final List<Class<?>> customTypeInterfaces,
+            final Boolean isMultiTenant)  {
+        this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
         
+        this.emf = emf;
+        this.ui = ui;
+        this.relationManagerFactory = relationManagerFactory;
+        this.customTypeInterfaces = customTypeInterfaces;
+        if (Boolean.TRUE.equals(isMultiTenant)){
+            this.loginPage = getMultiTenantLoginForm();
+        }else{
+            this.loginPage = getSingleTenantLoginForm();
+        }
+      
+    }
+    
+     //default login page (single or multi tenant), default text, default customTypeInterface
+    public Langkuik(final EntityManagerFactory emf,
+            final UI ui,
+            final RelationManagerFactory relationManagerFactory,
+            final Boolean isMultiTenant)  {
+        this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
+        
+        this.emf = emf;
+        this.ui = ui;
+        this.relationManagerFactory = relationManagerFactory;
+        this.customTypeInterfaces = null;
+        if (Boolean.TRUE.equals(isMultiTenant)){
+            this.loginPage = getMultiTenantLoginForm();
+        }else{
+            this.loginPage = getSingleTenantLoginForm();
+        }
+    }
+    
+    public void init(){
+        ui.setContent(loginPage);
+    }
+    
+    private FormLayout getSingleTenantLoginForm(){
+        final FormLayout loginForm = new FormLayout();
+        final TextField username = new TextField(textResourceBundle.getString("login.username"));
+        final PasswordField password = new PasswordField(textResourceBundle.getString("login.password"));
+        Button loginBtn = new Button(textResourceBundle.getString("login.loginBtnText"));
+        
+        loginForm.addComponent(username);
+        loginForm.addComponent(password);
+        loginForm.addComponent(loginBtn);
+        loginBtn.addClickListener(getLoginAction(username, password));
+        return loginForm;
+    }
+    
+    private FormLayout getMultiTenantLoginForm(){
+        final FormLayout loginForm = new FormLayout();
+        final TextField username = new TextField(textResourceBundle.getString("login.username"));
+        final TextField tenant = new TextField(textResourceBundle.getString("login.tenant"));
+        final PasswordField password = new PasswordField(textResourceBundle.getString("login.password"));
+        Button loginBtn = new Button(textResourceBundle.getString("login.loginBtnText"));
+        
+        loginForm.addComponent(username);
+        loginForm.addComponent(tenant);
+        loginForm.addComponent(password);
+        loginForm.addComponent(loginBtn);
+        loginBtn.addClickListener(getLoginAction(username,tenant, password));
+        return loginForm;
+    }
+
+    public void massIndex(final EntityManagerFactory emf) {
+        HibernateGenericDAO.massIndexDatabaseForSearch(emf);
+    }
+
+   
+    
+    public ClickListener getLoginAction(final TextField username,final PasswordField password){
+        return new ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                if (UserSecurityUtils.login(username.getValue(), password.getValue().toCharArray())) {
+                    mainApp();
+                } else {
+                    //authenMsgLbl.setCaption("Login has failed. Please retry");
+                    //form.addComponent(authenMsgLbl);
+                    Notification.show(textResourceBundle.getString("login.loginErrorText"), Notification.Type.WARNING_MESSAGE);
+                }
+            }
+        };
+    }
+    
+    public ClickListener getLoginAction(final TextField username,final TextField tenant,final PasswordField password){
+        return new ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                if (UserSecurityUtils.login(username.getValue()+"/"+tenant.getValue(), password.getValue().toCharArray())) {
+                    mainApp();
+                } else {
+                    //authenMsgLbl.setCaption("Login has failed. Please retry");
+                    //form.addComponent(authenMsgLbl);
+                    Notification.show(textResourceBundle.getString("login.loginErrorText"), Notification.Type.WARNING_MESSAGE);
+                }
+            }
+        };
+    }
+
+   
+
+    private void mainApp() {
+
         List<Class<?>> rootClasses = EntityUtils.getAllRootEntities(emf);
 
-      
-        
         //Manage custom type
-        if (customTypeInterfaces ==null){
+        if (customTypeInterfaces == null) {
             customTypeInterfaces = new ArrayList<>();
         }
-        
+
         //add system level custom type
         customTypeInterfaces.add(AttachmentCustomType.class);
         //create DAOs for custom types
         final List<DataAccessObject<?>> customTypeDaos = new ArrayList<>();
-        for (Class<?> clazz:customTypeInterfaces){
-            customTypeDaos.add(new HibernateGenericDAO(emf,clazz));
+        for (Class<?> clazz : customTypeInterfaces) {
+            customTypeDaos.add(new HibernateGenericDAO(emf, clazz));
         }
-        
-        
+
         //Setup page
         VerticalLayout main = new VerticalLayout();
         VerticalLayout content = new VerticalLayout();
@@ -95,21 +229,19 @@ public class Langkuik implements Serializable{
         final Configuration config = Configuration.getInstance();
 
         final PageParameter pageParameter = new PageParameter(customTypeDaos,
-                emf, 
-                relationManagerFactory, 
-                history, 
-                config, 
-                breadcrumb);
-        
+                emf,
+                relationManagerFactory,
+                history,
+                config,
+                breadcrumb,
+                textResourceBundle);
+
         history.push(new History("START", pageParameter.getLocalisedText("history.start")));
         StartView startView = new StartView(pageParameter);
         navigator.addView("START", startView);
         MenuBar.MenuItem create = menubar.addItem(pageParameter.getLocalisedText("menu.create"), null);
         MenuBar.MenuItem view = menubar.addItem(pageParameter.getLocalisedText("menu.view"), null);
-        
-        
-        
-        
+
         for (final Class rootClass : rootClasses) {
             final WebEntity myObject = (WebEntity) rootClass.getAnnotation(WebEntity.class);
             final DataAccessObject<?> dao = new HibernateGenericDAO<>(emf, rootClass);
@@ -118,28 +250,28 @@ public class Langkuik implements Serializable{
                 public void menuSelected(MenuBar.MenuItem selectedItem) {
                     pageParameter.setRootClass(rootClass); //save the root element
                     pageParameter.setType(WorkType.CREATE_NEW);
-                    Object object = dao.createNew(SecurityUtils.getCurrentTenant());
-                    BeanView<Object, ?> createNewView = new BeanView<>(object, null,null,pageParameter );
+                    Object object = dao.createNew(UserSecurityUtils.getCurrentTenant());
+                    BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
                     String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
-                    navigator.addView(targetView,(View)createNewView);
+                    navigator.addView(targetView, (View) createNewView);
                     history.clear();
                     history.push(new History("START", "Start"));
-                    History his = new History(targetView,pageParameter.getLocalisedText("menu.create.new", myObject.name()));
+                    History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
                     history.push(his);
                     navigator.navigateTo(targetView);
                 }
             });
-            view.addItem(pageParameter.getLocalisedText("menu.view.object",myObject.name()), new MenuBar.Command() {
+            view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
                 @Override
                 public void menuSelected(MenuBar.MenuItem selectedItem) {
                     pageParameter.setRootClass(rootClass);
                     pageParameter.setType(WorkType.EDIT);
                     SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
                     String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
-                    navigator.addView(targetView, (View)seeApplicationView);
+                    navigator.addView(targetView, (View) seeApplicationView);
                     history.clear();
                     history.push(new History("START", "Start"));
-                    History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object",myObject.name()));
+                    History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
                     history.push(his);
                     navigator.navigateTo(targetView);
                 }
@@ -150,19 +282,19 @@ public class Langkuik implements Serializable{
             @Override
             public void menuSelected(MenuBar.MenuItem selectedItem) {
                 ConfirmDialog.show(ui, pageParameter.getLocalisedText("dialog.logout.header"), pageParameter.getLocalisedText("dialog.logout.confirmText"),
-                        pageParameter.getLocalisedText("dialog.logout.button.ok"), 
+                        pageParameter.getLocalisedText("dialog.logout.button.ok"),
                         pageParameter.getLocalisedText("dialog.logout.button.cancel"), new ConfirmDialog.Listener() {
-                            @Override
-                            public void onClose(ConfirmDialog dialog) {
-                                if (dialog.isConfirmed()) {
-                                    HttpServletRequest req = (HttpServletRequest) VaadinService.getCurrentRequest();
-                                    HttpServletResponse resp = (HttpServletResponse) VaadinService.getCurrentResponse();
-                                    SecurityUtils.logOutUser(req, resp);
-                                }
-                            }
+                    @Override
+                    public void onClose(ConfirmDialog dialog) {
+                        if (dialog.isConfirmed()) {
+//                                    HttpServletRequest req = (HttpServletRequest) VaadinService.getCurrentRequest();
+//                                    HttpServletResponse resp = (HttpServletResponse) VaadinService.getCurrentResponse();
+                            UserSecurityUtils.logOutUser(ui);
 
-                    
-                        });
+                        }
+                    }
+
+                });
 
             }
         });
@@ -176,7 +308,7 @@ public class Langkuik implements Serializable{
 
         public StartView(PageParameter pageParameter) {
             setSizeFull();
-            this.pageParameter=pageParameter;
+            this.pageParameter = pageParameter;
         }
 
         @Override
@@ -195,5 +327,4 @@ public class Langkuik implements Serializable{
         }
     }
 
-   
 }

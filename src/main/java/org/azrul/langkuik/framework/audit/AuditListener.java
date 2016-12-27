@@ -16,7 +16,7 @@
 
 package org.azrul.langkuik.framework.audit;
 
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.azrul.langkuik.system.model.audit.AuditMetadata;
 import org.hibernate.envers.RevisionListener;
 
@@ -29,7 +29,7 @@ public class AuditListener implements RevisionListener {
  @Override
  public void newRevision(Object revisionEntity) {
   AuditMetadata auditMetadata=(AuditMetadata) revisionEntity;
-  auditMetadata.setUpdater(SecurityUtils.getCurrentUser());
+  auditMetadata.setUpdater(UserSecurityUtils.getCurrentUser());
  }
 
 }

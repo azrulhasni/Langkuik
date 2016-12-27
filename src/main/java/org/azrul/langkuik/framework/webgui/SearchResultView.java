@@ -23,7 +23,7 @@ import org.azrul.langkuik.framework.exception.EntityIsUsedException;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.EntityOperation;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.vaadin.dialogs.ConfirmDialog;
 
 /**
@@ -61,11 +61,11 @@ public class SearchResultView<C> extends VerticalView {
         BeanUtils beanUtils = new BeanUtils();
         
         //determine user details
-        Set<String> currentUserRoles = SecurityUtils.getCurrentUserRoles();
+        //Set<String> currentUserRoles = UserSecurityUtils.getCurrentUserRoles();
          
 
         //determine entity rights 
-        EntityOperation entityRight = SecurityUtils.getEntityRight(classOfBean, currentUserRoles);
+        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean);
         if (entityRight == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
             //Not accessible
             return;
@@ -93,7 +93,7 @@ public class SearchResultView<C> extends VerticalView {
                 classOfBean,
                 dao,
                 noBeansPerPage,
-                currentUserRoles,
+                /*currentUserRoles,*/
                 entityRight,
                 pageParameter);
             form.addComponent(dataTable);

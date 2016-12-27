@@ -22,7 +22,7 @@ import org.azrul.langkuik.security.role.EntityOperation;
 import org.azrul.langkuik.security.role.FieldOperation;
 import org.azrul.langkuik.security.role.RelationState;
 import org.azrul.langkuik.dao.EntityUtils;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
  *
@@ -67,13 +67,13 @@ public class BeanUtils implements Serializable {
         return groups;
     }
 
-    public <T> boolean isEditable(Class<T> classOfBean, Set<String> currentUserRoles) {
-        EntityOperation entityRight = SecurityUtils.getEntityRight(classOfBean, currentUserRoles);
+    public <T> boolean isEditable(Class<T> classOfBean/*, Set<String> currentUserRoles*/) {
+        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
         
         Map<String, Map<Integer, FieldContainer>> groups = createGroupsFromBean(classOfBean);
         for (Map<Integer, FieldContainer> group : groups.values()) {
             for (FieldContainer fieldContainer : group.values()) {
-                FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getPojoField(), currentUserRoles, entityRight);
+                FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getPojoField()/*, currentUserRoles*/, entityRight);
                 if (effectiveFieldState.equals(FieldState.EDITABLE)) { //if any field is editable, then you can save the object
                     return true;
                 }
@@ -82,12 +82,12 @@ public class BeanUtils implements Serializable {
         return false;
     }
 
-    public <T> boolean isViewable(Class<T> classOfBean, Set<String> currentUserRoles) {
-        EntityOperation entityRight = SecurityUtils.getEntityRight(classOfBean, currentUserRoles);
+    public <T> boolean isViewable(Class<T> classOfBean/*, Set<String> currentUserRoles*/) {
+        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
         Map<String, Map<Integer, FieldContainer>> groups = createGroupsFromBean(classOfBean);
         for (Map<Integer, FieldContainer> group : groups.values()) {
             for (FieldContainer fieldContainer : group.values()) {
-                FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getPojoField(), currentUserRoles, entityRight);
+                FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getPojoField()/*, currentUserRoles*/, entityRight);
                 if (effectiveFieldState.equals(FieldState.READ_ONLY)) { //if any field is editable, then you can save the object
                     return true;
                 }
@@ -98,13 +98,13 @@ public class BeanUtils implements Serializable {
 
    
 
-    public <T> boolean isCreatable(Class<T> classOfBean, Set<String> currentUserRoles) {
-        EntityOperation entityRight = SecurityUtils.getEntityRight(classOfBean, currentUserRoles);
+    public <T> boolean isCreatable(Class<T> classOfBean/*, Set<String> currentUserRoles*/) {
+        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
         return entityRight.equals(EntityOperation.CREATE_UPDATE);
     }
 
-    public RelationState calculateEffectiveRelationState(Field pojoField, Set<String> currentUserRoles, EntityOperation currentEntityRight, EntityOperation targetEntityRight) {
-        FieldState currentFieldState = calculateEffectiveFieldState(pojoField, currentUserRoles, currentEntityRight);
+    public RelationState calculateEffectiveRelationState(Field pojoField/*, Set<String> currentUserRoles*/, EntityOperation currentEntityRight, EntityOperation targetEntityRight) {
+        FieldState currentFieldState = calculateEffectiveFieldState(pojoField/*, currentUserRoles*/, currentEntityRight);
         RelationState effectiveRelationState = null;
         boolean targetIsRoot = isFieldTypeRoot(pojoField);
 
@@ -145,12 +145,12 @@ public class BeanUtils implements Serializable {
 
     
 
-    public FieldState calculateEffectiveFieldState(Field pojoField, Set<String> currentUserRoles, EntityOperation currentEntityRight) {
+    public FieldState calculateEffectiveFieldState(Field pojoField/*, Set<String> currentUserRoles*/, EntityOperation currentEntityRight) {
         WebField webField = pojoField.getAnnotation(WebField.class);
-        return calculateEffectiveFieldState(webField, currentUserRoles, currentEntityRight);
+        return calculateEffectiveFieldState(webField/*, currentUserRoles*/, currentEntityRight);
     }
 
-    public FieldState calculateEffectiveFieldState(WebField webField, Set<String> currentUserRoles, EntityOperation currentEntityRight) {
+    public FieldState calculateEffectiveFieldState(WebField webField/*, Set<String> currentUserRoles*/, EntityOperation currentEntityRight) {
         if (webField == null) {
             return null;
         } else {
@@ -159,7 +159,7 @@ public class BeanUtils implements Serializable {
             FieldOperation fieldRight = null;
             FieldState effectiveFieldState = null;
             for (FieldUserMap e : fieldUserMaps) {
-                if (currentUserRoles.contains(e.role()) || ("*").equals(e.role())) {
+                if (UserSecurityUtils.hasRole(e.role()) || ("*").equals(e.role())) {
                     fieldRight = e.right();
                     break;
                 }

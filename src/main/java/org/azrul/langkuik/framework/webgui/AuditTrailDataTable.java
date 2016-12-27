@@ -33,7 +33,7 @@ import org.azrul.langkuik.framework.audit.AuditedEntity;
 import org.azrul.langkuik.framework.audit.AuditedField;
 import org.azrul.langkuik.security.role.EntityOperation;
 import org.azrul.langkuik.security.role.FieldState;
-import org.azrul.langkuik.security.role.SecurityUtils;
+import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
  *
@@ -43,19 +43,19 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
 
     private DataAccessObject<AuditedEntity> dao;
     private final DAOQuery<AuditedEntity, AuditedEntity> daoQuery;
-    private final Set<String> currentUserRoles;
+    //private final Set<String> currentUserRoles;
     private final SimpleDateFormat dateTimeFormat;
     private final SimpleDateFormat dateFormat;
     private final BeanUtils beanUtils;
     private final EntityOperation entityOperation;
 
     public void refresh() {
-        Collection<AuditedEntity> auditedEntities = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, this.itemCountPerPage,SecurityUtils.getCurrentTenant());
-        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
+        Collection<AuditedEntity> auditedEntities = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, this.itemCountPerPage,UserSecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
         displayPageNumber();
 
         //add to table
-        addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
+        addToTable(auditedEntities/*, currentUserRoles*/, dateTimeFormat, beanUtils, entityOperation, dateFormat);
 
     }
 
@@ -74,7 +74,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
             Class<C> classOfBean,
             final DataAccessObject<AuditedEntity> dao,
             final int noBeansPerPage,
-            final Set<String> currentUserRoles,
+            //final Set<String> currentUserRoles,
             final PageParameter pageParameter,
             final String htmlTableLabel) {
 
@@ -84,7 +84,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
         this.daoQuery = auditQuery;
         this.pageParameter = pageParameter;
         this.htmlTableLabel = htmlTableLabel;
-        this.currentUserRoles = currentUserRoles;
+        //this.currentUserRoles = currentUserRoles;
         this.beanUtils = new BeanUtils();
         this.dateTimeFormat = new SimpleDateFormat(pageParameter.getConfig().get("dateTimeFormat"));
         this.dateFormat = new SimpleDateFormat(pageParameter.getConfig().get("dateFormat"));
@@ -94,9 +94,9 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.user"), String.class, null);
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.modified.at"), String.class, null);
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.operation"), String.class, null);
-        bigTotal = dao.countQueryResult(daoQuery,SecurityUtils.getCurrentTenant());
-        Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
-        addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
+        Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,UserSecurityUtils.getCurrentTenant());
+        addToTable(auditedEntities/*, currentUserRoles*/, dateTimeFormat, beanUtils, entityOperation, dateFormat);
         this.addComponent(table);
         pageLabel = new Label();
         displayPageNumber();
@@ -113,8 +113,8 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
 
                 if (currentTableIndex > 0) {
                     currentTableIndex = 0;
-                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
-                    addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
+                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,UserSecurityUtils.getCurrentTenant());
+                    addToTable(auditedEntities, /*currentUserRoles,*/ dateTimeFormat, beanUtils, entityOperation, dateFormat);
 
                     table.setPageLength(itemCountPerPage);
                 }
@@ -135,8 +135,8 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
                 }
                 if (currentTableIndex > 0) {
                     currentTableIndex -= itemCountPerPage;
-                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
-                    addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
+                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,UserSecurityUtils.getCurrentTenant());
+                    addToTable(auditedEntities/*, currentUserRoles*/, dateTimeFormat, beanUtils, entityOperation, dateFormat);
                     table.setPageLength(itemCountPerPage);
                 }
                 int currentUpdatedPage = currentTableIndex / itemCountPerPage;
@@ -159,8 +159,8 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
                         int currentPage = currentTableIndex / itemCountPerPage;
                         if (currentPage < lastPage) {
                             currentTableIndex += itemCountPerPage;
-                            Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
-                            addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
+                            Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,UserSecurityUtils.getCurrentTenant());
+                            addToTable(auditedEntities, /*currentUserRoles,*/ dateTimeFormat, beanUtils, entityOperation, dateFormat);
                             table.setPageLength(itemCountPerPage);
                         }
                         int currentUpdatedPage = currentTableIndex / itemCountPerPage;
@@ -181,8 +181,8 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
                 int currentPage = currentTableIndex / itemCountPerPage;
                 if (currentPage < lastPage) {
                     currentTableIndex = lastPage * itemCountPerPage;
-                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,SecurityUtils.getCurrentTenant());
-                    addToTable(auditedEntities, currentUserRoles, dateTimeFormat, beanUtils, entityOperation, dateFormat);
+                    Collection<AuditedEntity> auditedEntities = dao.runQuery(auditQuery, orderBy, asc, currentTableIndex, noBeansPerPage,UserSecurityUtils.getCurrentTenant());
+                    addToTable(auditedEntities, /*currentUserRoles,*/ dateTimeFormat, beanUtils, entityOperation, dateFormat);
                     table.setPageLength(itemCountPerPage);
                 }
                 pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (lastPage + 1), (lastPage + 1)));
@@ -194,10 +194,10 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
         this.addComponent(allDataTableNav);
     }
 
-    public void addToTable(Collection<AuditedEntity> auditedEntities, final Set<String> currentUserRoles, SimpleDateFormat dateTimeFormat, BeanUtils beanUtils, EntityOperation entityOperation, SimpleDateFormat dateFormat) throws UnsupportedOperationException, Property.ReadOnlyException {
+    public void addToTable(Collection<AuditedEntity> auditedEntities, /*final Set<String> currentUserRoles,*/ SimpleDateFormat dateTimeFormat, BeanUtils beanUtils, EntityOperation entityOperation, SimpleDateFormat dateFormat) throws UnsupportedOperationException, Property.ReadOnlyException {
         table.removeAllItems();
         for (AuditedEntity<C> auditedEntity : auditedEntities) {
-            if (EntityOperation.RESTRICTED.equals(SecurityUtils.getEntityRight(auditedEntity.getObject().getClass(), currentUserRoles))) {
+            if (EntityOperation.RESTRICTED.equals(UserSecurityUtils.getEntityRight(auditedEntity.getObject().getClass()))) {
                 continue;
             }
             Object newItemId = table.addItem();
@@ -207,7 +207,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
             row.getItemProperty(pageParameter.getLocalisedText("audittable.operation")).setValue(auditedEntity.getOperation().toString());
 
             for (AuditedField<?> auditedField : auditedEntity.getAuditedFields()) {
-                FieldState fieldState = beanUtils.calculateEffectiveFieldState(auditedField.getWebField(), currentUserRoles, entityOperation);
+                FieldState fieldState = beanUtils.calculateEffectiveFieldState(auditedField.getWebField()/*, currentUserRoles*/, entityOperation);
                 if (FieldState.EDITABLE.equals(fieldState)
                         || FieldState.READ_ONLY.equals(fieldState)) {
 

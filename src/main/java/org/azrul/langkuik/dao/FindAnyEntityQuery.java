@@ -7,12 +7,10 @@ package org.azrul.langkuik.dao;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import org.azrul.langkuik.dao.DAOQuery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;

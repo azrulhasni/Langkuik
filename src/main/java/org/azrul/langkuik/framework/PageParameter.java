@@ -28,7 +28,7 @@ public class PageParameter implements Serializable{
     private final RelationManagerFactory relationManagerFactory;
     private final Deque<History> history;
     private final Configuration config;
-    private final Layout breadcrumb;
+    private Layout breadcrumb;
     private final ResourceBundle resourceBundle;
     private final Locale locale;
     private Class rootClass;
@@ -52,6 +52,8 @@ public class PageParameter implements Serializable{
         this.rootClass=null;
     }
     
+    
+    
     public PageParameter(List<DataAccessObject<?>> customTypeDaos, 
             EntityManagerFactory emf, 
             RelationManagerFactory rmf, 
@@ -68,6 +70,26 @@ public class PageParameter implements Serializable{
         this.locale = new Locale("en");
         this.resourceBundle = ResourceBundle.getBundle("Text", locale);
         this.rootClass=null;
+    }
+    
+    public PageParameter(List<DataAccessObject<?>> customTypeDaos, 
+            EntityManagerFactory emf, 
+            RelationManagerFactory rmf, 
+            Deque<History> history, 
+            Configuration config) {
+        this.customTypeDaos = customTypeDaos;
+        this.entityManagerFactory = emf;
+        this.relationManagerFactory = rmf;
+        this.history = history;
+        this.config = config;
+        
+        this.locale = new Locale("en");
+        this.resourceBundle = ResourceBundle.getBundle("Text", locale);
+        this.rootClass=null;
+    }
+    
+    public void setBreadcrumb(Layout breadcrumb){
+        this.breadcrumb = breadcrumb;
     }
     
     public String getLocalisedText(String key){
