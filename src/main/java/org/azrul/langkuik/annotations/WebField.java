@@ -8,6 +8,8 @@ package org.azrul.langkuik.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Comparator;
+import org.azrul.langkuik.system.choices.SystemData;
 
 /**
  *
@@ -20,15 +22,24 @@ public @interface WebField {
     boolean allowNested() default false;
     String nestedFieldPrefix() default "";
     String group() default "All";
+    
+    //choices
     Choice[] choices() default {}; 
     ActiveChoice activeChoice() default @ActiveChoice;
-     
+    SystemData systemChoice() default SystemData.NONE;
+    
+    
+    //rank of field 
     int rank() default -1;
     boolean displayInTable() default false;
     AutoIncrementConfig autoIncrement() default @AutoIncrementConfig();
     FieldUserMap[] userMap() default {@FieldUserMap};
     
+    //constraints
     boolean required() default false;
+
+    
+    //multi tenancy
     boolean tenantId() default false;
    
 }

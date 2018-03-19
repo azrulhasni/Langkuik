@@ -235,6 +235,7 @@ public class AttachmentCustomTypeUICreator<P> implements CustomTypeUICreator<P> 
 //        createAtachmentList(attachmentList, attachments, config, view, form);
 //        return form;
 //    }
+
 }
 
 class MyUploadHandler<P> implements UploadFinishedHandler {
@@ -280,9 +281,9 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
     }
 
     @Override
-    public void handleFile(InputStream input, String fileName, String mimeType, long length) {
+    public void handleFile(InputStream input, String fileName, String mimeType, long length,  int filesLeftInQueue) {
         c++;
-        if (c > limit) {
+        if (c > limit && limit>0) {
             if (fileUpload != null) {
                 fileUpload.setInterruptedMsg(pageParameter.getLocalisedText("attachment.limit.numberOfFiles.message", limit));
                 fileUpload.interruptAll();
@@ -321,4 +322,6 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
         }
         //System.out.println("upload counter:" + c);
     }
+
+   
 }

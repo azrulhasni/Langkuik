@@ -28,7 +28,7 @@ import javax.persistence.EntityManagerFactory;
 import org.azrul.langkuik.annotations.WebField;
 import org.azrul.langkuik.framework.audit.AuditedEntity;
 import org.azrul.langkuik.framework.audit.AuditedField;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.system.model.audit.AuditMetadata;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
@@ -113,11 +113,11 @@ public class AuditTrailQuery<T> implements DAOQuery<AuditedEntity, AuditedEntity
                 auditedEntity.setObject(auditedBean);
                 
                 if (revisionType == RevisionType.ADD) {
-                    auditedEntity.setOperation(EntityOperation.CREATE_UPDATE);
+                    auditedEntity.setOperation(EntityRight.CREATE_UPDATE_DELETE);
                 } else if (revisionType == RevisionType.DEL) {
-                    auditedEntity.setOperation(EntityOperation.DELETE);
+                    auditedEntity.setOperation(EntityRight.DELETE);
                 } else {
-                    auditedEntity.setOperation(EntityOperation.UPDATE);
+                    auditedEntity.setOperation(EntityRight.UPDATE);
                 }
                 auditedEntity.setModifiedDate(auditMetadata.getRevisionDate());
                 auditedEntity.setRevisionNumber(auditMetadata.getId());

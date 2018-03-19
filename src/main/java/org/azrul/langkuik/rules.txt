@@ -9,3 +9,6 @@
 8) Only 1 level of nested is allowed
 9) Audit only for basic fields
 10) Tenant id field must be String and must have Analyze.YES
+11) Secret is a custom onetoonefield. Must be eager and cascadetype.All
+12) To make a field searchable: 1) The entity itself must be @Indexed and the field must be @Analyzed
+13) The annotations min/max in WebField is only applicable for OneToMany

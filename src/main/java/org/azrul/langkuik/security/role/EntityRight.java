@@ -13,10 +13,11 @@ import org.azrul.langkuik.configs.Configuration;
  *
  * @author azrulm
  */
-public enum EntityOperation {
+public enum EntityRight {
     RESTRICTED,
     VIEW,
     CREATE_UPDATE,
+    CREATE_UPDATE_DELETE,
     UPDATE,
     DELETE;
 

@@ -26,7 +26,7 @@ import org.azrul.langkuik.dao.FindRelationQuery;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.RelationState;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.vaadin.dialogs.ConfirmDialog;
 
@@ -92,7 +92,7 @@ public class RelationView<P, C> extends VerticalView {
         //final Set<String> currentUserRoles = UserSecurityUtils.getCurrentUserRoles();
 
         //determine entity rights 
-        final EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
+        final EntityRight entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
         if (entityRight == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
             //Not accessible
             return;
@@ -224,7 +224,8 @@ public class RelationView<P, C> extends VerticalView {
 
         //Navigation and actions
         HorizontalLayout buttonLayout = new HorizontalLayout();
-        if (parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN)) {
+        if (parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN) 
+                || parentToBeanRelationState.equals(RelationState.CREATE_ADD_CHILDREN)) {
 
             if (beanUtils.isCreatable(classOfBean/*, currentUserRoles*/)) {
                 Button addNewBtn = new Button(pageParameter.getLocalisedText("form.general.button.addNew"),
@@ -249,7 +250,8 @@ public class RelationView<P, C> extends VerticalView {
         }
 
         if (parentToBeanRelationState.equals(RelationState.EDIT_CHILDREN)
-                || parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN)) {
+                || parentToBeanRelationState.equals(RelationState.CREATE_ADD_DELETE_CHILDREN)
+                || parentToBeanRelationState.equals(RelationState.CREATE_ADD_CHILDREN)) {
 
             if (beanUtils.isEditable(classOfBean/*, currentUserRoles*/) || beanUtils.isViewable(classOfBean/*, currentUserRoles*/)) {
                 Button manageBtn = new Button(pageParameter.getLocalisedText("form.general.button.manage", ""),

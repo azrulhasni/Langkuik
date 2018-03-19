@@ -31,7 +31,7 @@ import org.azrul.langkuik.dao.DAOQuery;
 import org.azrul.langkuik.dao.DataAccessObject;
 import org.azrul.langkuik.dao.EntityUtils;
 import org.azrul.langkuik.framework.PageParameter;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.FieldState;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
@@ -56,7 +56,9 @@ public class DataTable<C> extends VerticalLayout {
     }
 
     public Collection<C> getTableValues() {
-        return (Collection<C>) table.getValue();
+        Collection<C> data = (Collection<C>) table.getValue();
+         this.table.select(null); //force vaadin to reset collection of selected fields
+         return data;
     }
     
     public void refresh(){
@@ -72,6 +74,9 @@ public class DataTable<C> extends VerticalLayout {
         this.bigTotal = 0L;
         this.asc = true;
         this.table = new Table(null);
+        this.table.setNullSelectionAllowed(true); //help with vaadin bug where reselecting second time will retain old data
+       
+
         this.fieldsToBeDisplayedInTable = new HashMap<>();
     }
 
@@ -80,7 +85,7 @@ public class DataTable<C> extends VerticalLayout {
             final DataAccessObject<C> dao,
             final int noBeansPerPage,
             /*final Set<String> currentUserRoles,*/
-            final EntityOperation entityOperation,
+            final EntityRight entityOperation,
             final PageParameter pageParameter,
             final boolean doNotDrawIfEmpty,
             final String htmlTableLabel) {
@@ -134,14 +139,14 @@ public class DataTable<C> extends VerticalLayout {
                 if (field.getType().isAssignableFrom(Collection.class)) {//only support simple Java objects
                     continue;
                 }
-                FieldState fieldState = beanUtils.calculateEffectiveFieldState(field/*, currentUserRoles*/, entityOperation);
+                FieldState fieldState = beanUtils.calculateEffectiveFieldState(webField.userMap(), entityOperation);
                 if (fieldState.equals(FieldState.EDITABLE)
                         || fieldState.equals(FieldState.READ_ONLY)) {
 
                     //r = webField.rank();
                     if (EntityUtils.isManagedEntity(field.getType(), pageParameter.getEntityManagerFactory())) {
                         if (webField.allowNested() == true) {
-                            EntityOperation nestedEntityRight = UserSecurityUtils.getEntityRight(field.getType()/*, currentUserRoles*/);
+                            EntityRight nestedEntityRight = UserSecurityUtils.getEntityRight(field.getType()/*, currentUserRoles*/);
                             if (nestedEntityRight != null) {
                                 for (Field nestedField : field.getType().getDeclaredFields()) {
                                     WebField nestedWebField = null;
@@ -160,7 +165,7 @@ public class DataTable<C> extends VerticalLayout {
                                         continue; //cannot have nested of nested. Only 1 level of nested is allowed
                                     }
 
-                                    FieldState nestedComponentState = beanUtils.calculateEffectiveFieldState(nestedField/*, currentUserRoles*/, nestedEntityRight);
+                                    FieldState nestedComponentState = beanUtils.calculateEffectiveFieldState(nestedWebField.userMap()/*, currentUserRoles*/, nestedEntityRight);
                                     if (nestedComponentState.equals(FieldState.EDITABLE)
                                             || nestedComponentState.equals(FieldState.READ_ONLY)) {
                                         orderByColumns.put(Double.valueOf((double) webField.rank())
@@ -408,7 +413,7 @@ public class DataTable<C> extends VerticalLayout {
             final DataAccessObject<C> dao,
             final int noBeansPerPage,
             /*final Set<String> currentUserRoles,*/
-            final EntityOperation entityRight,
+            final EntityRight entityRight,
             final PageParameter pageParameter) {
         createTablePanel(parameter,
                 classOfBean,

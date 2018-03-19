@@ -8,20 +8,26 @@ package org.azrul.langkuik.framework.webgui;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import org.azrul.langkuik.annotations.FieldUserMap;
 import org.azrul.langkuik.annotations.WebField;
+import org.azrul.langkuik.annotations.DerivedField;
 
 /**
  *
  * @author azrulm
  */
-public class FieldContainer implements Serializable{
+public class FieldContainer implements DataElementContainer{
     private WebField webField;
     private Field pojoField;
+
 
     public FieldContainer(WebField myField,Field pojoField){
         this.webField = myField;
         this.pojoField = pojoField;
     }
+    
+  
     
    
     /**
@@ -52,7 +58,9 @@ public class FieldContainer implements Serializable{
         this.pojoField = field;
     }
 
-    
+      public FieldUserMap[] getFieldUserMaps(){
+         return webField.userMap();
+     }
 
     
 }

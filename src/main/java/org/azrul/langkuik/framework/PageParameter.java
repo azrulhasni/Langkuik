@@ -33,6 +33,7 @@ public class PageParameter implements Serializable{
     private final Locale locale;
     private Class rootClass;
     private WorkType type;
+    private Class worklistType;
 
     public PageParameter(List<DataAccessObject<?>> customTypeDaos, 
             EntityManagerFactory emf, 
@@ -40,7 +41,8 @@ public class PageParameter implements Serializable{
             Deque<History> history, 
             Configuration config, 
             Layout breadcrumb,
-            ResourceBundle resourceBundle) {
+            ResourceBundle resourceBundle,
+            Class worklistType) {
         this.customTypeDaos = customTypeDaos;
         this.entityManagerFactory = emf;
         this.relationManagerFactory = rmf;
@@ -50,6 +52,7 @@ public class PageParameter implements Serializable{
         this.resourceBundle=resourceBundle;
         this.locale =resourceBundle!=null?resourceBundle.getLocale():new Locale("en");
         this.rootClass=null;
+        this.worklistType = worklistType;
     }
     
     
@@ -59,7 +62,8 @@ public class PageParameter implements Serializable{
             RelationManagerFactory rmf, 
             Deque<History> history, 
             Configuration config, 
-            Layout breadcrumb) {
+            Layout breadcrumb,
+            Class worklistType) {
         this.customTypeDaos = customTypeDaos;
         this.entityManagerFactory = emf;
         this.relationManagerFactory = rmf;
@@ -70,13 +74,15 @@ public class PageParameter implements Serializable{
         this.locale = new Locale("en");
         this.resourceBundle = ResourceBundle.getBundle("Text", locale);
         this.rootClass=null;
+        this.worklistType = worklistType;
     }
     
     public PageParameter(List<DataAccessObject<?>> customTypeDaos, 
             EntityManagerFactory emf, 
             RelationManagerFactory rmf, 
             Deque<History> history, 
-            Configuration config) {
+            Configuration config,
+            Class worklistType) {
         this.customTypeDaos = customTypeDaos;
         this.entityManagerFactory = emf;
         this.relationManagerFactory = rmf;
@@ -86,6 +92,7 @@ public class PageParameter implements Serializable{
         this.locale = new Locale("en");
         this.resourceBundle = ResourceBundle.getBundle("Text", locale);
         this.rootClass=null;
+        this.worklistType = worklistType;
     }
     
     public void setBreadcrumb(Layout breadcrumb){
@@ -217,6 +224,14 @@ public class PageParameter implements Serializable{
      */
     public void setType(WorkType type) {
         this.type = type;
+    }
+
+    public Class getWorklistType() {
+        return worklistType;
+    }
+
+    public void setWorklistType(Class worklistType) {
+        this.worklistType = worklistType;
     }
  
 }

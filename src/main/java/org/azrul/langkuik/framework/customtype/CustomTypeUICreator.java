@@ -32,9 +32,5 @@ public interface CustomTypeUICreator<C> {
             final PageParameter pageParameter,
             final FieldState componentState,
             final Window window);
-     
-     
-     
-   
-   
+
 }

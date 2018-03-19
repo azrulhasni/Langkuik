@@ -23,6 +23,7 @@ package org.azrul.langkuik.security.role;
 public enum RelationState {
     EDIT_RELATION, //root to root relation
     CREATE_ADD_DELETE_CHILDREN, //root to non-root, non-root to non-root
+    CREATE_ADD_CHILDREN, //root to non-root, non-root to non-root
     DELETE_CHILDREN, //root to non-root, non-root to non-root
     EDIT_CHILDREN,  //root to non-root, non-root to non-root
     READ_ONLY,

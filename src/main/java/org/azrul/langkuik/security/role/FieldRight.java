@@ -9,7 +9,7 @@ package org.azrul.langkuik.security.role;
  *
  * @author azrulm
  */
-public enum FieldOperation {
+public enum FieldRight {
     INHERITED,
     RESTRICTED,
     VIEW,

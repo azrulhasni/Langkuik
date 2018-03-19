@@ -75,6 +75,10 @@ public class EntityUtils implements Serializable {
         }
         return rootClasses;
     }
+    
+     
+    
+    
 
     public static boolean isClassRoot(Class targetClass) {
         if (targetClass.isAnnotationPresent(WebEntity.class)) {

@@ -42,15 +42,19 @@ import org.azrul.langkuik.framework.webgui.SearchResultView;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
+import org.azrul.langkuik.system.security.User;
+import org.azrul.langkuik.system.security.UserSearchResultView;
 import org.vaadin.dialogs.ConfirmDialog;
 
 public class Langkuik implements Serializable {
+
     private EntityManagerFactory emf = null;
     private UI ui = null;
-    private RelationManagerFactory relationManagerFactory=null;
-    private List<Class<?>> customTypeInterfaces=null;
-    private AbstractComponentContainer loginPage=null;
-    private ResourceBundle textResourceBundle=null;
+    private RelationManagerFactory relationManagerFactory = null;
+    private List<Class<?>> customTypeInterfaces = null;
+    private AbstractComponentContainer loginPage = null;
+    private ResourceBundle textResourceBundle = null;
+    private Class worklistType;
 
     //all parameters
     public Langkuik(final EntityManagerFactory emf,
@@ -58,103 +62,110 @@ public class Langkuik implements Serializable {
             final RelationManagerFactory relationManagerFactory,
             final List<Class<?>> customTypeInterfaces,
             final AbstractComponentContainer loginPage,
-            final ResourceBundle textResourceBundle)  {
+            final ResourceBundle textResourceBundle,
+            final Class worklist) {
         this.emf = emf;
         this.ui = ui;
         this.relationManagerFactory = relationManagerFactory;
         this.customTypeInterfaces = customTypeInterfaces;
         this.loginPage = loginPage;
-        this.textResourceBundle =textResourceBundle;
+        this.textResourceBundle = textResourceBundle;
     }
-    
-    
+
     //default login page (single or multi tenant)
     public Langkuik(final EntityManagerFactory emf,
             final UI ui,
             final RelationManagerFactory relationManagerFactory,
             final List<Class<?>> customTypeInterfaces,
             final ResourceBundle textResourceBundle,
-            final Boolean isMultiTenant)  {
+            final Boolean isMultiTenant,
+            final Class worklist) {
         this.emf = emf;
         this.ui = ui;
         this.relationManagerFactory = relationManagerFactory;
         this.customTypeInterfaces = customTypeInterfaces;
-        if (Boolean.TRUE.equals(isMultiTenant)){
+        if (Boolean.TRUE.equals(isMultiTenant)) {
             this.loginPage = getMultiTenantLoginForm();
-        }else{
+        } else {
             this.loginPage = getSingleTenantLoginForm();
         }
-        this.textResourceBundle =textResourceBundle;
-        
+        this.textResourceBundle = textResourceBundle;
+
     }
-    
+
     //default login page (single or multi tenant) and default text
     public Langkuik(final EntityManagerFactory emf,
             final UI ui,
             final RelationManagerFactory relationManagerFactory,
             final List<Class<?>> customTypeInterfaces,
-            final Boolean isMultiTenant)  {
+            final Boolean isMultiTenant,
+            final Class worklistType) {
         this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
-        
+
         this.emf = emf;
         this.ui = ui;
         this.relationManagerFactory = relationManagerFactory;
         this.customTypeInterfaces = customTypeInterfaces;
-        if (Boolean.TRUE.equals(isMultiTenant)){
+        if (Boolean.TRUE.equals(isMultiTenant)) {
             this.loginPage = getMultiTenantLoginForm();
-        }else{
+        } else {
             this.loginPage = getSingleTenantLoginForm();
         }
-      
+
     }
-    
-     //default login page (single or multi tenant), default text, default customTypeInterface
+
+    //default login page (single or multi tenant), default text, default customTypeInterface
     public Langkuik(final EntityManagerFactory emf,
             final UI ui,
             final RelationManagerFactory relationManagerFactory,
-            final Boolean isMultiTenant)  {
+            final Boolean isMultiTenant,
+            final Class worklistType) {
         this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
-        
+
         this.emf = emf;
         this.ui = ui;
         this.relationManagerFactory = relationManagerFactory;
         this.customTypeInterfaces = null;
-        if (Boolean.TRUE.equals(isMultiTenant)){
+        if (Boolean.TRUE.equals(isMultiTenant)) {
             this.loginPage = getMultiTenantLoginForm();
-        }else{
+        } else {
             this.loginPage = getSingleTenantLoginForm();
         }
     }
-    
-    public void init(){
+
+    public void init() {
+        UserSecurityUtils.init(this.emf);
         ui.setContent(loginPage);
+
     }
-    
-    private FormLayout getSingleTenantLoginForm(){
+
+    private FormLayout getSingleTenantLoginForm() {
         final FormLayout loginForm = new FormLayout();
         final TextField username = new TextField(textResourceBundle.getString("login.username"));
+        username.setId(username.getCaption());
         final PasswordField password = new PasswordField(textResourceBundle.getString("login.password"));
+        password.setId(password.getCaption());
         Button loginBtn = new Button(textResourceBundle.getString("login.loginBtnText"));
-        
+        loginBtn.setId(loginBtn.getCaption());
         loginForm.addComponent(username);
         loginForm.addComponent(password);
         loginForm.addComponent(loginBtn);
         loginBtn.addClickListener(getLoginAction(username, password));
         return loginForm;
     }
-    
-    private FormLayout getMultiTenantLoginForm(){
+
+    private FormLayout getMultiTenantLoginForm() {
         final FormLayout loginForm = new FormLayout();
         final TextField username = new TextField(textResourceBundle.getString("login.username"));
         final TextField tenant = new TextField(textResourceBundle.getString("login.tenant"));
         final PasswordField password = new PasswordField(textResourceBundle.getString("login.password"));
         Button loginBtn = new Button(textResourceBundle.getString("login.loginBtnText"));
-        
+
         loginForm.addComponent(username);
         loginForm.addComponent(tenant);
         loginForm.addComponent(password);
         loginForm.addComponent(loginBtn);
-        loginBtn.addClickListener(getLoginAction(username,tenant, password));
+        loginBtn.addClickListener(getLoginAction(username, tenant, password));
         return loginForm;
     }
 
@@ -162,9 +173,7 @@ public class Langkuik implements Serializable {
         HibernateGenericDAO.massIndexDatabaseForSearch(emf);
     }
 
-   
-    
-    public ClickListener getLoginAction(final TextField username,final PasswordField password){
+    public ClickListener getLoginAction(final TextField username, final PasswordField password) {
         return new ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent event) {
@@ -178,12 +187,12 @@ public class Langkuik implements Serializable {
             }
         };
     }
-    
-    public ClickListener getLoginAction(final TextField username,final TextField tenant,final PasswordField password){
+
+    public ClickListener getLoginAction(final TextField username, final TextField tenant, final PasswordField password) {
         return new ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent event) {
-                if (UserSecurityUtils.login(username.getValue()+"/"+tenant.getValue(), password.getValue().toCharArray())) {
+                if (UserSecurityUtils.login(username.getValue() + "/" + tenant.getValue(), password.getValue().toCharArray())) {
                     mainApp();
                 } else {
                     //authenMsgLbl.setCaption("Login has failed. Please retry");
@@ -193,8 +202,6 @@ public class Langkuik implements Serializable {
             }
         };
     }
-
-   
 
     private void mainApp() {
 
@@ -220,6 +227,7 @@ public class Langkuik implements Serializable {
         final HorizontalLayout breadcrumb = new HorizontalLayout();
 
         MenuBar menubar = new MenuBar();
+
         menubar.setId("MENUBAR");
         main.addComponent(menubar);
         main.addComponent(breadcrumb);
@@ -234,13 +242,15 @@ public class Langkuik implements Serializable {
                 history,
                 config,
                 breadcrumb,
-                textResourceBundle);
+                textResourceBundle,
+                worklistType);
 
         history.push(new History("START", pageParameter.getLocalisedText("history.start")));
         StartView startView = new StartView(pageParameter);
         navigator.addView("START", startView);
         MenuBar.MenuItem create = menubar.addItem(pageParameter.getLocalisedText("menu.create"), null);
         MenuBar.MenuItem view = menubar.addItem(pageParameter.getLocalisedText("menu.view"), null);
+        MenuBar.MenuItem manageCurrentUser = menubar.addItem(pageParameter.getLocalisedText("menu.user"), null);
 
         for (final Class rootClass : rootClasses) {
             final WebEntity myObject = (WebEntity) rootClass.getAnnotation(WebEntity.class);
@@ -274,6 +284,44 @@ public class Langkuik implements Serializable {
                     History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
                     history.push(his);
                     navigator.navigateTo(targetView);
+                }
+            });
+        }
+
+        manageCurrentUser.addItem(pageParameter.getLocalisedText("menu.user.manage_myself"), new MenuBar.Command() {
+            @Override
+            public void menuSelected(MenuBar.MenuItem selectedItem) {
+                pageParameter.setRootClass(User.class);
+                pageParameter.setType(WorkType.EDIT);
+
+                User currentUser = UserSecurityUtils.getCurrentUser();
+                //CurrentUser currentUser = new CurrentUser(user);
+                BeanView<?, User> userView = new BeanView<>(currentUser, pageParameter);
+                String targetView = "VIEW_USER_" + UUID.randomUUID().toString();
+                navigator.addView(targetView, (View) userView);
+                history.clear();
+                history.push(new History("START", "Start"));
+                History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", pageParameter.getLocalisedText("menu.user.manage")));
+                history.push(his);
+                navigator.navigateTo(targetView);
+
+            }
+        });
+        if (UserSecurityUtils.hasRole("ROLE_ADMIN")) {
+            manageCurrentUser.addItem(pageParameter.getLocalisedText("menu.user.manage_users"), new MenuBar.Command() {
+                @Override
+                public void menuSelected(MenuBar.MenuItem selectedItem) {
+                    pageParameter.setRootClass(User.class);
+                    pageParameter.setType(WorkType.EDIT);
+                    UserSearchResultView<?> seeApplicationView = new UserSearchResultView<>(User.class, pageParameter);
+                    String targetView = "VIEW_USERS_" + UUID.randomUUID().toString();
+                    navigator.addView(targetView, (View) seeApplicationView);
+                    history.clear();
+                    history.push(new History("START", "Start"));
+                    History his = new History(targetView, "Users");
+                    history.push(his);
+                    navigator.navigateTo(targetView);
+
                 }
             });
         }

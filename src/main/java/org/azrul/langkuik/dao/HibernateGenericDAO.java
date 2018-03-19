@@ -26,6 +26,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.EntityType;
 import org.azrul.langkuik.annotations.AutoIncrementConfig;
 import org.azrul.langkuik.annotations.WebField;
+import org.azrul.langkuik.framework.exception.DuplicateDataException;
 import org.azrul.langkuik.framework.exception.EntityIsUsedException;
 import org.azrul.langkuik.framework.generator.Generator;
 import org.azrul.langkuik.framework.relationship.RelationManager;
@@ -431,7 +432,7 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
     }
 
     @Override
-    public <P> T saveAndAssociate(T newBean, P parentBean, String parentToNewBeanField, RelationManager<P, T> relationManager) {
+    public <P> T saveAndAssociate(T newBean, P parentBean, String parentToNewBeanField, RelationManager<P, T> relationManager) throws DuplicateDataException {
         EntityManager em = emf.createEntityManager();
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         try {
@@ -452,7 +453,9 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 
             em.getTransaction().commit();
             return newBeanFromDB;
-        } catch (Exception e) {
+        }catch (ConstraintViolationException e) {
+            throw new DuplicateDataException();
+        }  catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
             em.getTransaction().rollback();
         } finally {
@@ -492,7 +495,7 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
         return null;
     }
 
-    private <E> E refresh(EntityManager em, E entity) {
+    private <E> E refresh(EntityManager em, final E entity) {
         Object idValue = EntityUtils.getIdentifierValue(entity, emf);
         if (idValue == null) {
             return null; //cannot refresh something that does exist not in DB

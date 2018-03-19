@@ -35,7 +35,7 @@ import org.azrul.langkuik.dao.HibernateGenericDAO;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
@@ -64,7 +64,7 @@ public class FindUsageView<C> extends VerticalView {
         this.removeAllComponents();
 
         //final Set<String> currentUserRoles = UserSecurityUtils.getCurrentUserRoles();
-        EntityOperation entityRight = determineEntityRight(currentBean.getClass()/*, currentUserRoles*/);
+        EntityRight entityRight = determineEntityRight(currentBean.getClass()/*, currentUserRoles*/);
         if (entityRight == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
             //Not accessible
             return;
@@ -98,7 +98,7 @@ public class FindUsageView<C> extends VerticalView {
             FindUsageQuery query = new FindUsageQuery(pageParameter.getEntityManagerFactory(),
              currentBean,
              entityClass);
-            EntityOperation usageEntityRight = UserSecurityUtils.getEntityRight(entityClass/*, currentUserRoles*/);
+            EntityRight usageEntityRight = UserSecurityUtils.getEntityRight(entityClass/*, currentUserRoles*/);
            
             if (dataTables.containsKey(entityClass.getCanonicalName())==false){
                 FindUsageDataTable dataTable = new FindUsageDataTable();
@@ -158,10 +158,10 @@ public class FindUsageView<C> extends VerticalView {
         backBtn.setId(backBtn.getCaption());
     }
 
-    private EntityOperation determineEntityRight(final Class aclass/*,
+    private EntityRight determineEntityRight(final Class aclass/*,
             final Set<String> currentUserRoles*/) {
         //determine entity rights
-        EntityOperation entityRight = null;
+        EntityRight entityRight = null;
         EntityUserMap[] entityUserMaps = ((WebEntity) aclass.getAnnotation(WebEntity.class)).userMap();
         for (EntityUserMap e : entityUserMaps) {
             if (UserSecurityUtils.hasRole(e.role()) || ("*").equals(e.role())) {

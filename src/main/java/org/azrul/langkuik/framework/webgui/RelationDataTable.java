@@ -14,7 +14,7 @@ import org.azrul.langkuik.dao.DataAccessObject;
 import org.azrul.langkuik.dao.FindRelationParameter;
 import org.azrul.langkuik.dao.FindRelationQuery;
 import org.azrul.langkuik.framework.PageParameter;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
@@ -32,7 +32,7 @@ public class RelationDataTable<P,C> extends DataTable<C> {
             DataAccessObject<C> dao, 
             int noBeansPerPage,  
             //final Set<String> currentUserRoles,
-            final EntityOperation entityOperation,
+            final EntityRight entityOperation,
             final PageParameter pageParameter) {
         this.findRelationParameter=findRelationParameter;
         createTablePanel(daoQuery, classOfBean, dao, noBeansPerPage/*, currentUserRoles*/,entityOperation,pageParameter);

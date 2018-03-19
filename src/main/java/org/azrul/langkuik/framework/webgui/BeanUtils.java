@@ -7,9 +7,12 @@ package org.azrul.langkuik.framework.webgui;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -18,11 +21,15 @@ import org.azrul.langkuik.annotations.FieldUserMap;
 import org.azrul.langkuik.annotations.WebEntity;
 import org.azrul.langkuik.annotations.WebField;
 import org.azrul.langkuik.security.role.FieldState;
-import org.azrul.langkuik.security.role.EntityOperation;
-import org.azrul.langkuik.security.role.FieldOperation;
+import org.azrul.langkuik.security.role.EntityRight;
+import org.azrul.langkuik.security.role.FieldRight;
 import org.azrul.langkuik.security.role.RelationState;
 import org.azrul.langkuik.dao.EntityUtils;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
+import org.azrul.langkuik.annotations.DerivedField;
+import org.azrul.langkuik.annotations.OpUserMap;
+import org.azrul.langkuik.annotations.WebOp;
+import org.azrul.langkuik.security.role.OpState;
 
 /**
  *
@@ -34,9 +41,9 @@ public class BeanUtils implements Serializable {
 
     }
 
-    public <T> Map<Integer, FieldContainer> getOrderedFieldsByRank(Class<T> classOfBean) throws SecurityException {
+    public <T> Map<Integer, DataElementContainer> getOrderedFieldsByRank(Class<T> classOfBean) throws SecurityException {
         //loop collecting annotation info
-        Map<Integer, FieldContainer> group = new TreeMap<>();
+        Map<Integer, DataElementContainer> group = new TreeMap<>();
         for (Field field : classOfBean.getDeclaredFields()) {
             if (field.isAnnotationPresent(WebField.class)) {
                 WebField webField = field.getAnnotation(WebField.class);
@@ -49,33 +56,65 @@ public class BeanUtils implements Serializable {
         return group;
     }
 
-    public <T> Map<String, Map<Integer, FieldContainer>> createGroupsFromBean(Class<T> classOfBean) throws SecurityException {
+    public <T> Map<String, Map<Integer, DataElementContainer>> createGroupsFromBean(Class<T> classOfBean) throws SecurityException {
         //loop collecting annotation info
-        Map<String, Map<Integer, FieldContainer>> groups = new HashMap<>();
+        Map<String, Map<Integer, DataElementContainer>> groups = new HashMap<>();
         for (Field field : classOfBean.getDeclaredFields()) {
             if (field.isAnnotationPresent(WebField.class)) {
                 WebField webField = field.getAnnotation(WebField.class);
                 String group = webField.group();
                 if (!groups.containsKey(group)) {
-                    groups.put(group, new TreeMap<Integer, FieldContainer>());
+                    groups.put(group, new TreeMap<Integer, DataElementContainer>());
                 }
                 FieldContainer fieldContainer = new FieldContainer(webField, field);
                 groups.get(group).put(webField.rank(), fieldContainer);
 
             }
         }
+        for (Method method : classOfBean.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(DerivedField.class)) {
+                DerivedField derField = method.getAnnotation(DerivedField.class);
+                String group = derField.group();
+                if (!groups.containsKey(group)) {
+                    groups.put(group, new TreeMap<Integer, DataElementContainer>());
+                }
+                DataElementContainer methodContainer = new DerivedFieldContainer(derField, method);
+                groups.get(group).put(derField.rank(), methodContainer);
+
+            }
+        }
         return groups;
     }
+    
+//    public <T> List<MethodContainer> getOps(Class<T> classOfBean){
+//        List<MethodContainer> ops = new ArrayList<>();
+//    
+//         for (Method method : classOfBean.getDeclaredMethods()) {
+//            if(method.isAnnotationPresent(WebOp.class)){
+//                WebOp op = method.getAnnotation(WebOp.class);
+//                
+//                MethodContainer methodContainer = new MethodContainer(op, method);
+//                ops.add(methodContainer);
+//                
+//            }
+//         }
+//         return ops;
+//         
+//    }
 
     public <T> boolean isEditable(Class<T> classOfBean/*, Set<String> currentUserRoles*/) {
-        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
-        
-        Map<String, Map<Integer, FieldContainer>> groups = createGroupsFromBean(classOfBean);
-        for (Map<Integer, FieldContainer> group : groups.values()) {
-            for (FieldContainer fieldContainer : group.values()) {
-                FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getPojoField()/*, currentUserRoles*/, entityRight);
-                if (effectiveFieldState.equals(FieldState.EDITABLE)) { //if any field is editable, then you can save the object
-                    return true;
+        EntityRight entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
+
+        Map<String, Map<Integer, DataElementContainer>> groups = createGroupsFromBean(classOfBean);
+        for (Map<Integer, DataElementContainer> group : groups.values()) {
+
+            for (DataElementContainer container : group.values()) {
+                if (container instanceof FieldContainer) {
+                    FieldContainer fieldContainer = (FieldContainer) container;
+                    FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getWebField().userMap()/*, currentUserRoles*/, entityRight);
+                    if ((FieldState.EDITABLE).equals(effectiveFieldState)) { //if any field is editable, then you can save the object
+                        return true;
+                    }
                 }
             }
         }
@@ -83,55 +122,66 @@ public class BeanUtils implements Serializable {
     }
 
     public <T> boolean isViewable(Class<T> classOfBean/*, Set<String> currentUserRoles*/) {
-        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
-        Map<String, Map<Integer, FieldContainer>> groups = createGroupsFromBean(classOfBean);
-        for (Map<Integer, FieldContainer> group : groups.values()) {
-            for (FieldContainer fieldContainer : group.values()) {
-                FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getPojoField()/*, currentUserRoles*/, entityRight);
-                if (effectiveFieldState.equals(FieldState.READ_ONLY)) { //if any field is editable, then you can save the object
-                    return true;
+        EntityRight entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
+        Map<String, Map<Integer, DataElementContainer>> groups = createGroupsFromBean(classOfBean);
+        for (Map<Integer, DataElementContainer> group : groups.values()) {
+            for (DataElementContainer container : group.values()) {
+                if (container instanceof FieldContainer) {
+                    FieldContainer fieldContainer = (FieldContainer) container;
+                    FieldState effectiveFieldState = calculateEffectiveFieldState(fieldContainer.getWebField().userMap()/*, currentUserRoles*/, entityRight);
+                    if ((FieldState.READ_ONLY).equals(effectiveFieldState)) { //if any field is editable, then you can save the object
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-   
-
     public <T> boolean isCreatable(Class<T> classOfBean/*, Set<String> currentUserRoles*/) {
-        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
-        return entityRight.equals(EntityOperation.CREATE_UPDATE);
+        EntityRight entityRight = UserSecurityUtils.getEntityRight(classOfBean/*, currentUserRoles*/);
+        return (EntityRight.CREATE_UPDATE).equals(entityRight) || (EntityRight.CREATE_UPDATE_DELETE).equals(entityRight);
     }
 
-    public RelationState calculateEffectiveRelationState(Field pojoField/*, Set<String> currentUserRoles*/, EntityOperation currentEntityRight, EntityOperation targetEntityRight) {
-        FieldState currentFieldState = calculateEffectiveFieldState(pojoField/*, currentUserRoles*/, currentEntityRight);
+    public RelationState calculateEffectiveRelationState(Field pojoField, FieldUserMap[] fieldUserMaps, EntityRight currentEntityRight, EntityRight targetEntityRight) {
+        
+        FieldState currentFieldState = calculateEffectiveFieldState(fieldUserMaps, currentEntityRight);
         RelationState effectiveRelationState = null;
         boolean targetIsRoot = isFieldTypeRoot(pojoField);
 
         effectiveRelationState = RelationState.READ_ONLY;
         if (FieldState.INVISIBLE.equals(currentFieldState)) {
             effectiveRelationState = RelationState.INVISIBLE;
-        } else if (EntityOperation.RESTRICTED.equals(targetEntityRight)) {
+        } else if (EntityRight.RESTRICTED.equals(targetEntityRight)) {
             effectiveRelationState = RelationState.INVISIBLE;
         } else if (FieldState.READ_ONLY.equals(currentFieldState)) {
             effectiveRelationState = RelationState.READ_ONLY;
         } else if (FieldState.EDITABLE.equals(currentFieldState)) { //current right=CREATE,UPDATE,DELETE
             if (targetIsRoot == true) {
                 effectiveRelationState = RelationState.EDIT_RELATION;
+            } else if (EntityRight.CREATE_UPDATE_DELETE.equals(targetEntityRight)) {
+                effectiveRelationState = RelationState.CREATE_ADD_DELETE_CHILDREN;
+            } else if (EntityRight.CREATE_UPDATE.equals(targetEntityRight)) {
+                effectiveRelationState = RelationState.CREATE_ADD_CHILDREN;
+            } else if (EntityRight.DELETE.equals(targetEntityRight)) {
+                effectiveRelationState = RelationState.DELETE_CHILDREN;
+            } else if (EntityRight.UPDATE.equals(targetEntityRight)) {
+                effectiveRelationState = RelationState.EDIT_CHILDREN;
             } else {
-                if (EntityOperation.CREATE_UPDATE.equals(targetEntityRight)) {
-                    effectiveRelationState = RelationState.CREATE_ADD_DELETE_CHILDREN;
-                } else if (EntityOperation.DELETE.equals(targetEntityRight)) {
-                    effectiveRelationState = RelationState.DELETE_CHILDREN;
-                } else if (EntityOperation.UPDATE.equals(targetEntityRight)) {
-                    effectiveRelationState = RelationState.EDIT_CHILDREN;
-                } else {
-                    effectiveRelationState = RelationState.READ_ONLY;
-                }
+                effectiveRelationState = RelationState.READ_ONLY;
             }
         }
         return effectiveRelationState;
 
+    }
+    
+    public OpState calculateEffectiveOpState(Method method,OpUserMap[] opUserMaps){
+        for (OpUserMap oum:opUserMaps){
+                if (UserSecurityUtils.hasRole(oum.role()) || ("*").equals(oum.role())) {
+                    return OpState.EXECUTABLE;
+                }
+        }
+        return OpState.RESTRTICTED;
     }
 
     public boolean isFieldTypeRoot(Field pojoField) {
@@ -143,60 +193,65 @@ public class BeanUtils implements Serializable {
         }
     }
 
-    
+//    public FieldState calculateEffectiveFieldState(Field pojoField/*, Set<String> currentUserRoles*/, EntityRight currentEntityRight) {
+//        WebField webField = pojoField.getAnnotation(WebField.class);
+//        return calculateEffectiveFieldState(webField/*, currentUserRoles*/, currentEntityRight);
+//    }
 
-    public FieldState calculateEffectiveFieldState(Field pojoField/*, Set<String> currentUserRoles*/, EntityOperation currentEntityRight) {
-        WebField webField = pojoField.getAnnotation(WebField.class);
-        return calculateEffectiveFieldState(webField/*, currentUserRoles*/, currentEntityRight);
-    }
+    public FieldState calculateEffectiveFieldState(FieldUserMap[] fieldUserMaps/*, Set<String> currentUserRoles*/, EntityRight currentEntityRight) {
+        
 
-    public FieldState calculateEffectiveFieldState(WebField webField/*, Set<String> currentUserRoles*/, EntityOperation currentEntityRight) {
-        if (webField == null) {
-            return null;
-        } else {
-            FieldUserMap[] fieldUserMaps = webField.userMap();
-
-            FieldOperation fieldRight = null;
+            FieldRight fieldRight = null;
             FieldState effectiveFieldState = null;
+            //Prioritize exact role
             for (FieldUserMap e : fieldUserMaps) {
-                if (UserSecurityUtils.hasRole(e.role()) || ("*").equals(e.role())) {
+                if (UserSecurityUtils.hasRole(e.role())) {
                     fieldRight = e.right();
                     break;
                 }
             }
+            //if no exact role, see if * is applicable
+            if (fieldRight==null){
+                for (FieldUserMap e : fieldUserMaps) {
+                    if (("*").equals(e.role())) {
+                        fieldRight = e.right();
+                        break;
+                    }
+                }
+            }
+            
             if (fieldRight == null) {
-                fieldRight = FieldOperation.INHERITED; //if a role is not specified, then the right falls to INHERITED by default
+                fieldRight = FieldRight.INHERITED; //if a role is not specified, then the right falls to INHERITED by default
             }
 
-            if (fieldRight.equals(FieldOperation.INHERITED)) { //inherit entity level rights
-                if (EntityOperation.RESTRICTED.equals(currentEntityRight)) {
+            if (fieldRight.equals(FieldRight.INHERITED)) { //inherit entity level rights
+                if (EntityRight.RESTRICTED.equals(currentEntityRight)) {
                     effectiveFieldState = FieldState.INVISIBLE;
-                } else if (EntityOperation.UPDATE.equals(currentEntityRight)
-                        || EntityOperation.CREATE_UPDATE.equals(currentEntityRight)) {
+                } else if (EntityRight.UPDATE.equals(currentEntityRight)
+                        || EntityRight.CREATE_UPDATE.equals(currentEntityRight)
+                        || EntityRight.CREATE_UPDATE_DELETE.equals(currentEntityRight)) {
                     effectiveFieldState = FieldState.EDITABLE;
-                } else if (EntityOperation.VIEW.equals(currentEntityRight)) {
+                } else if (EntityRight.VIEW.equals(currentEntityRight)) {
                     effectiveFieldState = FieldState.READ_ONLY;
                 }
-            } else {
-                if (FieldOperation.RESTRICTED.equals(fieldRight)) {
-                    effectiveFieldState = FieldState.INVISIBLE;
-                } else if (FieldOperation.UPDATE.equals(fieldRight)) {
-                    effectiveFieldState = FieldState.EDITABLE;
-                } else if (FieldOperation.VIEW.equals(fieldRight)) {
-                    effectiveFieldState = FieldState.READ_ONLY;
-                }
+            } else if (FieldRight.RESTRICTED.equals(fieldRight)) {
+                effectiveFieldState = FieldState.INVISIBLE;
+            } else if (FieldRight.UPDATE.equals(fieldRight)) {
+                effectiveFieldState = FieldState.EDITABLE;
+            } else if (FieldRight.VIEW.equals(fieldRight)) {
+                effectiveFieldState = FieldState.READ_ONLY;
             }
             return effectiveFieldState;
-        }
+        
     }
-    
-    public String getName(Class<?> classOfBean){
+
+    public String getName(Class<?> classOfBean) {
         WebEntity webEntity = classOfBean.getAnnotation(WebEntity.class);
         String beanName = null;
-        if (webEntity!= null){
+        if (webEntity != null) {
             beanName = webEntity.name();
-            if (beanName==null){
-                beanName=classOfBean.getSimpleName().toLowerCase();
+            if (beanName == null) {
+                beanName = classOfBean.getSimpleName().toLowerCase();
             }
         }
         return beanName;

@@ -31,7 +31,7 @@ import org.azrul.langkuik.dao.DataAccessObject;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.audit.AuditedEntity;
 import org.azrul.langkuik.framework.audit.AuditedField;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.FieldState;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
@@ -47,7 +47,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
     private final SimpleDateFormat dateTimeFormat;
     private final SimpleDateFormat dateFormat;
     private final BeanUtils beanUtils;
-    private final EntityOperation entityOperation;
+    private final EntityRight entityOperation;
 
     public void refresh() {
         Collection<AuditedEntity> auditedEntities = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, this.itemCountPerPage,UserSecurityUtils.getCurrentTenant());
@@ -88,7 +88,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
         this.beanUtils = new BeanUtils();
         this.dateTimeFormat = new SimpleDateFormat(pageParameter.getConfig().get("dateTimeFormat"));
         this.dateFormat = new SimpleDateFormat(pageParameter.getConfig().get("dateFormat"));
-        this.entityOperation = EntityOperation.VIEW;
+        this.entityOperation = EntityRight.VIEW;
 
         table.setPageLength(noBeansPerPage);
         table.addContainerProperty(pageParameter.getLocalisedText("audittable.user"), String.class, null);
@@ -194,10 +194,10 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
         this.addComponent(allDataTableNav);
     }
 
-    public void addToTable(Collection<AuditedEntity> auditedEntities, /*final Set<String> currentUserRoles,*/ SimpleDateFormat dateTimeFormat, BeanUtils beanUtils, EntityOperation entityOperation, SimpleDateFormat dateFormat) throws UnsupportedOperationException, Property.ReadOnlyException {
+    public void addToTable(Collection<AuditedEntity> auditedEntities, /*final Set<String> currentUserRoles,*/ SimpleDateFormat dateTimeFormat, BeanUtils beanUtils, EntityRight entityOperation, SimpleDateFormat dateFormat) throws UnsupportedOperationException, Property.ReadOnlyException {
         table.removeAllItems();
         for (AuditedEntity<C> auditedEntity : auditedEntities) {
-            if (EntityOperation.RESTRICTED.equals(UserSecurityUtils.getEntityRight(auditedEntity.getObject().getClass()))) {
+            if (EntityRight.RESTRICTED.equals(UserSecurityUtils.getEntityRight(auditedEntity.getObject().getClass()))) {
                 continue;
             }
             Object newItemId = table.addItem();
@@ -207,7 +207,7 @@ public class AuditTrailDataTable<C> extends DataTable<C> {
             row.getItemProperty(pageParameter.getLocalisedText("audittable.operation")).setValue(auditedEntity.getOperation().toString());
 
             for (AuditedField<?> auditedField : auditedEntity.getAuditedFields()) {
-                FieldState fieldState = beanUtils.calculateEffectiveFieldState(auditedField.getWebField()/*, currentUserRoles*/, entityOperation);
+                FieldState fieldState = beanUtils.calculateEffectiveFieldState(auditedField.getWebField().userMap(), entityOperation);
                 if (FieldState.EDITABLE.equals(fieldState)
                         || FieldState.READ_ONLY.equals(fieldState)) {
 

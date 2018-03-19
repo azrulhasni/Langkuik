@@ -8,6 +8,7 @@ package org.azrul.langkuik.dao;
 import java.util.Collection;
 import java.util.List;
 import org.azrul.langkuik.framework.audit.AuditedEntity;
+import org.azrul.langkuik.framework.exception.DuplicateDataException;
 import org.azrul.langkuik.framework.exception.EntityIsUsedException;
 import org.azrul.langkuik.framework.relationship.RelationManager;
 
@@ -37,7 +38,7 @@ public interface DataAccessObject<T> {
     //update
     <P> P associate(FindRelationParameter<P,T> frParam, T newBean, T oldBean);
     <P> P associate(FindRelationParameter<P,T> frParam, Collection<T> newBeans);
-    <P> T saveAndAssociate(T newBean, P parentBean, String parentToNewBeanField, RelationManager<P, T> relationManager);
+    <P> T saveAndAssociate(T newBean, P parentBean, String parentToNewBeanField, RelationManager<P, T> relationManager) throws DuplicateDataException;
     <P> P unlink(FindRelationParameter<P,T> frParam, Collection<T> oldBean);
     Object unlinkAndDelete(Collection oldBeans, Object parentBean, String parentToNewBeanField, RelationManager relationManager);
     <P> P unlinkAndDelete(FindRelationParameter<P,T> frParam, Collection< T> oldBeans);

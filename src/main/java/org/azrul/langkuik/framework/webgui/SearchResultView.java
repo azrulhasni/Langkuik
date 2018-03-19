@@ -22,7 +22,7 @@ import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.exception.EntityIsUsedException;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.vaadin.dialogs.ConfirmDialog;
 
@@ -65,7 +65,7 @@ public class SearchResultView<C> extends VerticalView {
          
 
         //determine entity rights 
-        EntityOperation entityRight = UserSecurityUtils.getEntityRight(classOfBean);
+        EntityRight entityRight = UserSecurityUtils.getEntityRight(classOfBean);
         if (entityRight == null) { //if entityRight=EntityRight.NONE, still allow to go through because field level might be accessible
             //Not accessible
             return;

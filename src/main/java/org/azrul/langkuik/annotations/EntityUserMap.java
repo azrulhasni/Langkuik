@@ -8,7 +8,7 @@ package org.azrul.langkuik.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 
 /**
  *
@@ -16,6 +16,6 @@ import org.azrul.langkuik.security.role.EntityOperation;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EntityUserMap {
-    EntityOperation right() default EntityOperation.CREATE_UPDATE;
+    EntityRight right() default EntityRight.CREATE_UPDATE_DELETE;
     String role() default "*";
 }

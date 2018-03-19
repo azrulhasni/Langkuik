@@ -29,7 +29,8 @@ public class AuditListener implements RevisionListener {
  @Override
  public void newRevision(Object revisionEntity) {
   AuditMetadata auditMetadata=(AuditMetadata) revisionEntity;
-  auditMetadata.setUpdater(UserSecurityUtils.getCurrentUser());
+  
+  auditMetadata.setUpdater(UserSecurityUtils.getCurrentUsername());
  }
 
 }

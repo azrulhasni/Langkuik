@@ -7,3 +7,4 @@
     6.1) Chain pages by next  / Enter key
     6.2) Lock application being opened 
 7) Field based multi-tenancy
+8) User matrix and access management - DONE

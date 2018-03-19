@@ -36,7 +36,7 @@ import org.azrul.langkuik.framework.activechoice.ActiveChoiceTarget;
 import org.azrul.langkuik.framework.activechoice.ActiveChoiceUtils;
 import org.azrul.langkuik.framework.activechoice.EmptyEnum;
 import org.azrul.langkuik.framework.exception.EntityIsUsedException;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
 /**
@@ -45,13 +45,13 @@ import org.azrul.langkuik.security.role.UserSecurityUtils;
  */
 public class SearchResultDataTable<C> extends DataTable<C> {
 
-    public SearchResultDataTable(FindAnyEntityQuery<C> parameter, Class<C> classOfBean, DataAccessObject<C> dao, int noBeansPerPage,/*final Set<String> currentUserRoles,*/ final EntityOperation entityRight, final PageParameter pageParameter) {
+    public SearchResultDataTable(FindAnyEntityQuery<C> parameter, Class<C> classOfBean, DataAccessObject<C> dao, int noBeansPerPage,/*final Set<String> currentUserRoles,*/ final EntityRight entityRight, final PageParameter pageParameter) {
         this.daoQuery = parameter;
         createSearchPanel(classOfBean, /*currentUserRoles,*/ entityRight, pageParameter);
         createTablePanel(parameter, classOfBean, dao, noBeansPerPage, /*currentUserRoles,*/ entityRight, pageParameter);
     }
 
-    protected void createSearchPanel(final Class<C> classOfBean, /*final Set<String> currentUserRoles,*/ final EntityOperation entityRight, final PageParameter pageParameter) throws UnsupportedOperationException, SecurityException, FieldGroup.BindException {
+    protected void createSearchPanel(final Class<C> classOfBean, /*final Set<String> currentUserRoles,*/ final EntityRight entityRight, final PageParameter pageParameter) throws UnsupportedOperationException, SecurityException, FieldGroup.BindException {
         final BeanFieldGroup fieldGroup = new BeanFieldGroup(classOfBean);
         final FindAnyEntityQuery searchQuery = (FindAnyEntityQuery) daoQuery;
 
@@ -60,13 +60,17 @@ public class SearchResultDataTable<C> extends DataTable<C> {
         Map<String, com.vaadin.ui.ComboBox> activeChoicesFieldWithHierarchyAsKey = new HashMap<>();
 
         BeanUtils beanUtils = new BeanUtils();
-        Map<Integer, FieldContainer> fieldContainers = beanUtils.getOrderedFieldsByRank(classOfBean);
+        Map<Integer, DataElementContainer> fieldContainers = beanUtils.getOrderedFieldsByRank(classOfBean);
 
         final Map<Integer, com.vaadin.ui.Field> searchableFieldsByRank = new TreeMap<>();
         final Map<String, com.vaadin.ui.Field> searchableFieldsByName = new TreeMap<>();
 
         //Construct search form
-        for (FieldContainer fieldContainer : fieldContainers.values()) {
+        for (DataElementContainer elementContainer : fieldContainers.values()) {
+            if (elementContainer instanceof DerivedFieldContainer){
+                continue;
+            }
+            FieldContainer fieldContainer = (FieldContainer)elementContainer;
             Field pojoField = fieldContainer.getPojoField();
             WebField webField = fieldContainer.getWebField();
 

@@ -18,7 +18,7 @@ package org.azrul.langkuik.framework.audit;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.List;
-import org.azrul.langkuik.security.role.EntityOperation;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.hibernate.envers.RevisionType;
 
 /**
@@ -32,7 +32,7 @@ public class AuditedEntity<T> {
 
     private Date modifiedDate;
     private String userId;
-    private EntityOperation operation;
+    private EntityRight operation;
     private List<AuditedField<?>> auditedFields;
 
     /**
@@ -94,24 +94,24 @@ public class AuditedEntity<T> {
     /**
      * @return the operation
      */
-    public EntityOperation getOperation() {
+    public EntityRight getOperation() {
         return operation;
     }
 
     /**
      * @param operation the operation to set
      */
-    public void setOperation(EntityOperation operation) {
+    public void setOperation(EntityRight operation) {
         this.operation = operation;
     }
 
 //    public void setOperation(RevisionType revisionType) {
 //        if (revisionType == RevisionType.ADD) {
-//            operation = EntityOperation.CREATE_UPDATE;
+//            operation = EntityRight.CREATE_UPDATE;
 //        } else if (revisionType == RevisionType.DEL) {
-//            operation = EntityOperation.DELETE;
+//            operation = EntityRight.DELETE;
 //        } else {
-//            operation = EntityOperation.UPDATE;
+//            operation = EntityRight.UPDATE;
 //        }
 //    }
 

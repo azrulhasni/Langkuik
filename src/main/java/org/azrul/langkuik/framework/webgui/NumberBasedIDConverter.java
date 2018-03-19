@@ -30,6 +30,7 @@ public class NumberBasedIDConverter extends AbstractStringToNumberConverter<Numb
         if (numberClass.equals(BigDecimal.class)){
             decimalFormat.setParseBigDecimal(true);
         }
+        
         return decimalFormat;
     }
 
