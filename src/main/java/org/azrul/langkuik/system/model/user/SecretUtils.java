@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.azrul.langkuik.system.security;
+package org.azrul.langkuik.system.model.user;
 
 import java.lang.reflect.Field;
 import org.apache.shiro.crypto.RandomNumberGenerator;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
 import org.apache.shiro.crypto.hash.Sha256Hash;
+import org.azrul.langkuik.system.security.HashAndSalt;
 
 /**
  *

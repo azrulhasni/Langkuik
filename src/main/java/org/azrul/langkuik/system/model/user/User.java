@@ -3,18 +3,21 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.azrul.langkuik.system.security;
+package org.azrul.langkuik.system.model.user;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -34,12 +37,13 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.azrul.langkuik.annotations.DerivedField;
+import org.azrul.langkuik.system.model.role.Role;
 
 @Entity
 @Table(name = "_User",schema = "SYSTEM")
 @XmlRootElement
 @Indexed
-@WebEntity(name="applicant", userMap={
+@WebEntity(name="applicant", isRoot = true, userMap={
     @EntityUserMap(role="*",right=EntityRight.UPDATE),
     @EntityUserMap(role="ROLE_ADMIN",right=EntityRight.CREATE_UPDATE)
 })
@@ -84,15 +88,22 @@ public class User implements Serializable {
     private String status;
      
      
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn()
+    //@OneToMany(fetch = FetchType.EAGER)
+    //@JoinColumn()
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(
+      schema="SYSTEM",      
+      name="USER_ROLES",
+      joinColumns=@JoinColumn(name="USER_ID", referencedColumnName="ID"),
+      inverseJoinColumns=@JoinColumn(name="ROLE_ID", referencedColumnName="ID"))
+    @ElementCollection(targetClass=Role.class)
     @WebField(name = "roles", rank = 5,
             userMap = {
                 @FieldUserMap(role = "*", right = FieldRight.VIEW),
                 @FieldUserMap(role = "ROLE_ADMIN", right = FieldRight.UPDATE),
             }
     )
-    private Set<UserRole> rolesCollection;
+    private Set<Role> rolesCollection;
      
     
 
@@ -136,11 +147,11 @@ public class User implements Serializable {
         this.password = password;
     }
 
-    public Set<UserRole> getRolesCollection() {
+    public Set<Role> getRolesCollection() {
         return rolesCollection;
     }
 
-    public void setRolesCollection(Set<UserRole> rolesCollection) {
+    public void setRolesCollection(Set<Role> rolesCollection) {
         this.rolesCollection = rolesCollection;
     }
 
@@ -157,9 +168,9 @@ public class User implements Serializable {
     public String getRoles(){
         StringBuilder sb = new StringBuilder();
         if (rolesCollection.size()==1){
-            return ((UserRole)rolesCollection.iterator().next()).getRoleName();
+            return ((Role)rolesCollection.iterator().next()).getRoleName();
         }
-        for (UserRole role:rolesCollection){
+        for (Role role:rolesCollection){
             sb.append(role.getRoleName()+",");
         }
         return sb.toString();

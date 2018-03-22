@@ -23,8 +23,8 @@ import org.azrul.langkuik.framework.webgui.BeanView;
 
 import org.azrul.langkuik.security.role.FieldState;
 import org.azrul.langkuik.system.security.HashAndSalt;
-import org.azrul.langkuik.system.security.Secret;
-import org.azrul.langkuik.system.security.SecretUtils;
+import org.azrul.langkuik.system.model.user.Secret;
+import org.azrul.langkuik.system.model.user.SecretUtils;
 
 /**
  *

@@ -17,7 +17,7 @@ package org.azrul.langkuik.framework;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
-import org.azrul.langkuik.system.security.User;
+import org.azrul.langkuik.system.model.user.User;
 
 /**
  *

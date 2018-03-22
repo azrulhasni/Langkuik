@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.azrul.langkuik.system.security;
+package org.azrul.langkuik.system.model.role;
 
 import java.util.Comparator;
 
@@ -23,10 +23,10 @@ import java.util.Comparator;
  *
  * @author Azrul
  */
-public class UserRoleComparator implements Comparator<UserRole>{
+public class RoleComparator implements Comparator<Role>{
 
     @Override
-    public int compare(UserRole o1,UserRole o2) {
+    public int compare(Role o1,Role o2) {
         if (o1==null){
             return -1;
         }

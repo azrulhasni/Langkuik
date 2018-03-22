@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.azrul.langkuik.system.security;
+package org.azrul.langkuik.system.model.user;
 
 import org.azrul.langkuik.framework.webgui.*;
 import com.vaadin.data.Property;

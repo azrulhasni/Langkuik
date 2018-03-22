@@ -42,8 +42,8 @@ import org.azrul.langkuik.framework.webgui.SearchResultView;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
-import org.azrul.langkuik.system.security.User;
-import org.azrul.langkuik.system.security.UserSearchResultView;
+import org.azrul.langkuik.system.model.user.User;
+import org.azrul.langkuik.system.model.user.UserSearchResultView;
 import org.vaadin.dialogs.ConfirmDialog;
 
 public class Langkuik implements Serializable {

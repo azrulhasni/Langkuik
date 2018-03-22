@@ -37,8 +37,10 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Factory;
 import org.azrul.langkuik.annotations.FieldUserMap;
 import org.azrul.langkuik.annotations.WebField;
-import org.azrul.langkuik.system.security.User;
-import org.azrul.langkuik.system.security.UserDAO;
+import org.azrul.langkuik.system.model.role.Role;
+import org.azrul.langkuik.system.model.role.RoleDAO;
+import org.azrul.langkuik.system.model.user.User;
+import org.azrul.langkuik.system.model.user.UserDAO;
 //import org.springframework.security.authentication.AnonymousAuthenticationToken;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.core.GrantedAuthority;
@@ -58,7 +60,9 @@ public class UserSecurityUtils {
         Factory<org.apache.shiro.mgt.SecurityManager> factory = new IniSecurityManagerFactory();
         org.apache.shiro.mgt.SecurityManager securityManager = factory.getInstance();
         SecurityUtils.setSecurityManager(securityManager);
-        extractRoles(emf);
+        List<String> roles = extractRoles(emf);
+        storeRolesIntoDB(roles);
+        roles.addAll(roles);
         
     }
     
@@ -66,10 +70,15 @@ public class UserSecurityUtils {
         return roles;
     }
     
+    private static void storeRolesIntoDB(List<String> roles){
+        roles.forEach(RoleDAO::registerRole);
+    }
     
     
-   private static void extractRoles(EntityManagerFactory emf) {
-        Set<String> roleSet = new HashSet<>();
+    
+   private static List<String> extractRoles(EntityManagerFactory emf) {
+        List<String> roles = new ArrayList();
+        Set<String> roleSet = new HashSet();
         List<Class<?>> classes = new ArrayList<>();
         for (ManagedType<?> entity : emf.getMetamodel().getManagedTypes()) {
             Class<?> clazz = entity.getJavaType();
@@ -98,6 +107,7 @@ public class UserSecurityUtils {
             }
         }
         roles.addAll(roleSet);
+        return roles;
     }
     
     public static EntityRight getEntityRight(Class<?> classOfBean/*,
@@ -178,7 +188,7 @@ public class UserSecurityUtils {
 
             try {
                 currentUser.login(token);
-                System.out.println("User [" + currentUser.getPrincipal().toString() + "] logged in successfully.");
+                //System.out.println("User [" + currentUser.getPrincipal().toString() + "] logged in successfully.");
 
                 // save current username in the session, so we have access to our User model
                 currentUser.getSession().setAttribute("username", username);

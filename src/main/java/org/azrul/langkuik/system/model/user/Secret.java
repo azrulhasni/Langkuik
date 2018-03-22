@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.azrul.langkuik.system.security;
+package org.azrul.langkuik.system.model.user;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

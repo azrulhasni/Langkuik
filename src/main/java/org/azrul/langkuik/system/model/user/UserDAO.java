@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.azrul.langkuik.system.security;
+package org.azrul.langkuik.system.model.user;
 
+import org.azrul.langkuik.system.model.role.RoleDAO;
 import com.vaadin.ui.UI;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -29,6 +30,7 @@ import org.azrul.langkuik.annotations.WebField;
 import org.azrul.langkuik.framework.generator.Generator;
 import org.azrul.langkuik.framework.relationship.DefaultRelationManagerFactory;
 import org.azrul.langkuik.framework.relationship.RelationManagerFactory;
+import org.azrul.langkuik.system.model.role.Role;
 
 public class UserDAO {
 
@@ -44,7 +46,7 @@ public class UserDAO {
         javax.persistence.criteria.CriteriaQuery<User> criteria = cb.createQuery(User.class);
         Root<User> user = criteria.from(User.class);
         criteria.select(user).where(cb.equal(user.get("email"), email));
-         try {
+        try {
             return em.createQuery(criteria).getSingleResult();
         } catch (NoResultException e) {
             return null;
@@ -71,7 +73,7 @@ public class UserDAO {
         javax.persistence.criteria.CriteriaQuery<User> criteria = cb.createQuery(User.class);
         Root<User> user = criteria.from(User.class);
         criteria.select(user).where(cb.equal(user.get("id"), id));
-         try {
+        try {
             return em.createQuery(criteria).getSingleResult();
         } catch (NoResultException e) {
             return null;
@@ -122,31 +124,31 @@ public class UserDAO {
     public static void registerAdmin(String username, String plainTextPassword) {
         User user = new User();
         user.setUsername(username);
-        UserRole role = new UserRole();
-        role.setRoleName("ROLE_ADMIN");
+       
         User existingUser = getUserByUsername(username);
 
         EntityManager em = emf.createEntityManager();
         try {
             if (existingUser == null) {
-                em.getTransaction().begin();
 
-                assignId(em, role);
-                em.merge(role);
-                em.flush();
-                Set<UserRole> roles = new HashSet<>();
-                roles.add(role);
-                user.setRolesCollection(roles);
-                generatePassword(user, plainTextPassword, em);
+                if (!RoleDAO.isRoleExist("ROLE_ADMIN")) {
+                    em.getTransaction().begin();
+                    Role role = RoleDAO.insert(em, "ROLE_ADMIN");
+                    em.flush();
+                    Set<Role> roles = new HashSet<>();
+                    roles.add(role);
+                    user.setRolesCollection(roles);
+                    generatePassword(user, plainTextPassword, em);
 
-                assignId(em, user);
+                    assignId(em, user);
 
-                em.merge(user);
-                em.getTransaction().commit();
+                    em.merge(user);
+                    em.getTransaction().commit();
+                }
             }
 
         } catch (Exception e) {
-            Logger.getLogger(UserRoleDAO.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(RoleDAO.class.getName()).log(Level.SEVERE, null, e);
             em.getTransaction().rollback();
         } finally {
 
