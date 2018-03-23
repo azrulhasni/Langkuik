@@ -8,6 +8,7 @@ package org.azrul.langkuik.framework.webgui;
 import com.vaadin.data.util.converter.Converter;
 import com.vaadin.data.util.converter.StringToDateConverter;
 import com.vaadin.server.Sizeable;
+import com.vaadin.shared.ui.MultiSelectMode;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.HorizontalLayout;
@@ -17,9 +18,12 @@ import com.vaadin.ui.VerticalLayout;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +54,8 @@ public class DataTable<C> extends VerticalLayout {
     protected DAOQuery daoQuery;
     protected PageParameter pageParameter;
     protected String htmlTableLabel;
+    
+    
 
     public Map<String, Field> getVisibleFields() {
         return fieldsToBeDisplayedInTable;
@@ -57,8 +63,11 @@ public class DataTable<C> extends VerticalLayout {
 
     public Collection<C> getTableValues() {
         Collection<C> data = (Collection<C>) table.getValue();
-         this.table.select(null); //force vaadin to reset collection of selected fields
-         return data;
+        List<C> listData = new ArrayList(data);
+        table.setValue(null);
+         //this.table.select(null); //force vaadin to reset collection of selected fields
+         Collections.reverse(listData);
+         return listData;
     }
     
     public void refresh(){
@@ -74,6 +83,7 @@ public class DataTable<C> extends VerticalLayout {
         this.bigTotal = 0L;
         this.asc = true;
         this.table = new Table(null);
+        this.table.setMultiSelect(false);
         this.table.setNullSelectionAllowed(true); //help with vaadin bug where reselecting second time will retain old data
        
 

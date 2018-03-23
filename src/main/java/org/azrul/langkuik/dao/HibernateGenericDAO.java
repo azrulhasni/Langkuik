@@ -242,20 +242,23 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
     }
 
     @Override
-    public T save(T newObject) {
+    public T save(T newObject) throws DuplicateDataException {
 
         EntityManager em = emf.createEntityManager();
 
         T savedObject = null;
-        try {
-            em.getTransaction().begin();
+        em.getTransaction().begin();
+        try {    
             savedObject = em.merge(newObject);
-
             em.getTransaction().commit();
             return savedObject;
-        } catch (Exception e) {
+        }catch(ConstraintViolationException e){
+            throw new DuplicateDataException();
+        }catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
-            em.getTransaction().rollback();
+            if (em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
         } finally {
 
             em.close();
@@ -479,6 +482,7 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
                 em.merge(newBeanFromDB);
                 newBeansFromDB.add(newBeanFromDB);
             }
+            //em.merge(parentBeanFromDB);
             em.flush();
             ftem.index(parentBeanFromDB);
             for (T newBean : newBeansFromDB) {
@@ -527,7 +531,7 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
     }
 
     @Override
-    public Object saveWithRelation(Object newBean, Object parentBean, String parentToNewBeanField, RelationManager relationManager) {
+    public Object saveWithRelation(Object newBean, Object parentBean, String parentToNewBeanField, RelationManager relationManager)throws DuplicateDataException {
         EntityManager em = emf.createEntityManager();
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         try {
@@ -548,6 +552,8 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
             }
             em.getTransaction().commit();
             return parentBeanFromDB;
+        } catch (ConstraintViolationException e) {
+            throw new DuplicateDataException();
         } catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
             em.getTransaction().rollback();

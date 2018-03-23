@@ -41,6 +41,7 @@ import org.azrul.langkuik.framework.webgui.BeanView;
 import org.azrul.langkuik.framework.webgui.SearchResultView;
 import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
+import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 import org.azrul.langkuik.system.model.user.User;
 import org.azrul.langkuik.system.model.user.UserSearchResultView;
@@ -255,37 +256,81 @@ public class Langkuik implements Serializable {
         for (final Class rootClass : rootClasses) {
             final WebEntity myObject = (WebEntity) rootClass.getAnnotation(WebEntity.class);
             final DataAccessObject<?> dao = new HibernateGenericDAO<>(emf, rootClass);
-            create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
-                @Override
-                public void menuSelected(MenuBar.MenuItem selectedItem) {
-                    pageParameter.setRootClass(rootClass); //save the root element
-                    pageParameter.setType(WorkType.CREATE_NEW);
-                    Object object = dao.createNew(UserSecurityUtils.getCurrentTenant());
-                    BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
-                    String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
-                    navigator.addView(targetView, (View) createNewView);
-                    history.clear();
-                    history.push(new History("START", "Start"));
-                    History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
-                    history.push(his);
-                    navigator.navigateTo(targetView);
+            if (UserSecurityUtils.hasRole("ROLE_ADMIN")) {
+                if (rootClass.equals(User.class)) {
+                    create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
+                        @Override
+                        public void menuSelected(MenuBar.MenuItem selectedItem) {
+                            pageParameter.setRootClass(rootClass); //save the root element
+                            pageParameter.setType(WorkType.CREATE_NEW);
+                            Object object = dao.createNew(UserSecurityUtils.getCurrentTenant());
+                            BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                            String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
+                            navigator.addView(targetView, (View) createNewView);
+                            history.clear();
+                            history.push(new History("START", "Start"));
+                            History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
+                            history.push(his);
+                            navigator.navigateTo(targetView);
+                        }
+                    });
+//                    if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
+//
+//                        view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
+//                            @Override
+//                            public void menuSelected(MenuBar.MenuItem selectedItem) {
+//                                pageParameter.setRootClass(rootClass);
+//                                pageParameter.setType(WorkType.EDIT);
+//                                SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
+//                                String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
+//                                navigator.addView(targetView, (View) seeApplicationView);
+//                                history.clear();
+//                                history.push(new History("START", "Start"));
+//                                History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
+//                                history.push(his);
+//                                navigator.navigateTo(targetView);
+//                            }
+//                        });
+//                    }
                 }
-            });
-            view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
-                @Override
-                public void menuSelected(MenuBar.MenuItem selectedItem) {
-                    pageParameter.setRootClass(rootClass);
-                    pageParameter.setType(WorkType.EDIT);
-                    SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
-                    String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
-                    navigator.addView(targetView, (View) seeApplicationView);
-                    history.clear();
-                    history.push(new History("START", "Start"));
-                    History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
-                    history.push(his);
-                    navigator.navigateTo(targetView);
+            } else if (UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE
+                    || UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE_DELETE) {
+                create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
+                    @Override
+                    public void menuSelected(MenuBar.MenuItem selectedItem) {
+                        pageParameter.setRootClass(rootClass); //save the root element
+                        pageParameter.setType(WorkType.CREATE_NEW);
+                        Object object = dao.createNew(UserSecurityUtils.getCurrentTenant());
+                        BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                        String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
+                        navigator.addView(targetView, (View) createNewView);
+                        history.clear();
+                        history.push(new History("START", "Start"));
+                        History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
+                        history.push(his);
+                        navigator.navigateTo(targetView);
+                    }
+                });
+                if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
+
+                    view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
+                        @Override
+                        public void menuSelected(MenuBar.MenuItem selectedItem) {
+                            pageParameter.setRootClass(rootClass);
+                            pageParameter.setType(WorkType.EDIT);
+                            SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
+                            String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
+                            navigator.addView(targetView, (View) seeApplicationView);
+                            history.clear();
+                            history.push(new History("START", "Start"));
+                            History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
+                            history.push(his);
+                            navigator.navigateTo(targetView);
+                        }
+                    });
                 }
-            });
+            }
+
         }
 
         manageCurrentUser.addItem(pageParameter.getLocalisedText("menu.user.manage_myself"), new MenuBar.Command() {
@@ -313,7 +358,7 @@ public class Langkuik implements Serializable {
                 public void menuSelected(MenuBar.MenuItem selectedItem) {
                     pageParameter.setRootClass(User.class);
                     pageParameter.setType(WorkType.EDIT);
-                    UserSearchResultView<?> seeApplicationView = new UserSearchResultView<>(User.class, pageParameter);
+                    UserSearchResultView<User> seeApplicationView = new UserSearchResultView<>(User.class, pageParameter);
                     String targetView = "VIEW_USERS_" + UUID.randomUUID().toString();
                     navigator.addView(targetView, (View) seeApplicationView);
                     history.clear();

@@ -40,12 +40,12 @@ import org.azrul.langkuik.annotations.DerivedField;
 import org.azrul.langkuik.system.model.role.Role;
 
 @Entity
-@Table(name = "_User",schema = "SYSTEM")
+@Table(name = "_User", schema = "SYSTEM")
 @XmlRootElement
 @Indexed
-@WebEntity(name="applicant", isRoot = true, userMap={
-    @EntityUserMap(role="*",right=EntityRight.UPDATE),
-    @EntityUserMap(role="ROLE_ADMIN",right=EntityRight.CREATE_UPDATE)
+@WebEntity(name = "user", isRoot = true, userMap = {
+    @EntityUserMap(role = "*", right = EntityRight.UPDATE),
+    @EntityUserMap(role = "ROLE_ADMIN", right = EntityRight.CREATE_UPDATE)
 })
 public class User implements Serializable {
 
@@ -55,66 +55,59 @@ public class User implements Serializable {
     private static final long serialVersionUID = -4656759219348212715L;
 
     @Id
-    @WebField(name="user id", rank=0, displayInTable=true, userMap = {
+    @WebField(name = "user id", rank = 0, displayInTable = true, userMap = {
         @FieldUserMap(right = FieldRight.VIEW)
     },
-    autoIncrement = @AutoIncrementConfig(generator = LangkuikIdGenerator.class))
+            autoIncrement = @AutoIncrementConfig(generator = LangkuikIdGenerator.class))
     private Long id;
 
-    @Column(unique =true )
+    @Column(unique = true)
     @Field(analyze = Analyze.YES)
     @Size(max = 30)
     @Audited
-    @WebField(name="username",rank=1, displayInTable=true, required=true)
+    @WebField(name = "username", rank = 1, displayInTable = true, required = true)
     private String username;
 
-    @Column(unique =true )
+    @Column(unique = true)
     @Field(analyze = Analyze.YES)
     @Size(max = 30)
     @Audited
-    @WebField(name="email",  rank=2, displayInTable=true, required=true)
+    @WebField(name = "email", rank = 2, displayInTable = true, required = true)
     private String email;
-    
+
     @Column
     @Field(analyze = Analyze.YES)
     @Size(max = 30)
     @Audited
-    @WebField(name="status",  rank=3, displayInTable=true, required=true,
+    @WebField(name = "status", rank = 3, displayInTable = true, required = true,
             choices = {
                 @Choice(display = "Active", textValue = "3"),
                 @Choice(display = "Inactive", textValue = "5")
             }
     )
     private String status;
-     
-     
+
     //@OneToMany(fetch = FetchType.EAGER)
     //@JoinColumn()
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
-      schema="SYSTEM",      
-      name="USER_ROLES",
-      joinColumns=@JoinColumn(name="USER_ID", referencedColumnName="ID"),
-      inverseJoinColumns=@JoinColumn(name="ROLE_ID", referencedColumnName="ID"))
-    @ElementCollection(targetClass=Role.class)
+            schema = "SYSTEM",
+            name = "USER_ROLES",
+            joinColumns = @JoinColumn(name = "USER_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "ROLE_ID", referencedColumnName = "ID"))
     @WebField(name = "roles", rank = 5,
             userMap = {
                 @FieldUserMap(role = "*", right = FieldRight.VIEW),
-                @FieldUserMap(role = "ROLE_ADMIN", right = FieldRight.UPDATE),
-            }
+                @FieldUserMap(role = "ROLE_ADMIN", right = FieldRight.UPDATE),}
     )
     private Set<Role> rolesCollection;
-     
-    
 
     @WebField(name = "password", rank = 6)
     @OneToOne(/*mappedBy = "applicationId", */fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn()
     private Secret password;
 
-
     // ... getters and setters ...
-
     public Long getId() {
         return id;
     }
@@ -162,16 +155,18 @@ public class User implements Serializable {
     public void setStatus(String status) {
         this.status = status;
     }
-    
-    
-    @DerivedField(name="Roles", rank=4)
-    public String getRoles(){
+
+    @DerivedField(name = "Roles", rank = 4)
+    public String getRoles() {
         StringBuilder sb = new StringBuilder();
-        if (rolesCollection.size()==1){
-            return ((Role)rolesCollection.iterator().next()).getRoleName();
-        }
-        for (Role role:rolesCollection){
-            sb.append(role.getRoleName()+",");
+
+        if (rolesCollection != null) {
+            if (rolesCollection.size() == 1) {
+                return ((Role) rolesCollection.iterator().next()).getRoleName();
+            }
+            for (Role role : rolesCollection) {
+                sb.append(role.getRoleName() + ",");
+            }
         }
         return sb.toString();
     }

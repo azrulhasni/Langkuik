@@ -16,6 +16,7 @@ import com.vaadin.ui.Component;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.ListSelect;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 import com.wcs.wcslib.vaadin.widget.multifileupload.ui.MultiFileUpload;
@@ -37,6 +38,7 @@ import org.azrul.langkuik.dao.FindRelationQuery;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.customtype.CustomType;
 import org.azrul.langkuik.framework.customtype.CustomTypeUICreator;
+import org.azrul.langkuik.framework.exception.DuplicateDataException;
 import org.azrul.langkuik.framework.webgui.BeanView;
 
 import org.azrul.langkuik.framework.webgui.WebEntityItemContainer;
@@ -67,7 +69,7 @@ public class AttachmentCustomTypeUICreator<P> implements CustomTypeUICreator<P> 
                 currentBean, pojoFieldName, null, attachmentClass
         );
         FindRelationQuery<P, AttachmentCustomType> query = new FindRelationQuery(findRelationParameter);
-        final Collection<AttachmentCustomType> attachments = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")),UserSecurityUtils.getCurrentTenant());
+        final Collection<AttachmentCustomType> attachments = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")), UserSecurityUtils.getCurrentTenant());
         //final Collection<AttachmentCustomType> attachments = attachmentDao.find(currentBean, pojoFieldName, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")));
 
         final WebEntityItemContainer attachmentIC = new WebEntityItemContainer(attachmentClass);
@@ -118,7 +120,7 @@ public class AttachmentCustomTypeUICreator<P> implements CustomTypeUICreator<P> 
                             currentBean, pojoFieldName, null, attachmentClass
                     );
                     FindRelationQuery<P, AttachmentCustomType> query = new FindRelationQuery(findRelationParameter);
-                    Collection<AttachmentCustomType> a = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")),UserSecurityUtils.getCurrentTenant());
+                    Collection<AttachmentCustomType> a = attachmentDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")), UserSecurityUtils.getCurrentTenant());
 
                     attachmentIC.removeAllItems();
                     attachmentIC.addAll(a);
@@ -235,7 +237,6 @@ public class AttachmentCustomTypeUICreator<P> implements CustomTypeUICreator<P> 
 //        createAtachmentList(attachmentList, attachments, config, view, form);
 //        return form;
 //    }
-
 }
 
 class MyUploadHandler<P> implements UploadFinishedHandler {
@@ -281,9 +282,9 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
     }
 
     @Override
-    public void handleFile(InputStream input, String fileName, String mimeType, long length,  int filesLeftInQueue) {
+    public void handleFile(InputStream input, String fileName, String mimeType, long length, int filesLeftInQueue) {
         c++;
-        if (c > limit && limit>0) {
+        if (c > limit && limit > 0) {
             if (fileUpload != null) {
                 fileUpload.setInterruptedMsg(pageParameter.getLocalisedText("attachment.limit.numberOfFiles.message", limit));
                 fileUpload.interruptAll();
@@ -295,7 +296,7 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
         attachmentFile.mkdirs();
         try (OutputStream output = new FileOutputStream(fullPath + File.separator + fileName)) {
             int bytesRead;
-            AttachmentCustomType attachment = (AttachmentCustomType) customTypeDao.createAndSave(attachmentClass,UserSecurityUtils.getCurrentTenant());
+            AttachmentCustomType attachment = (AttachmentCustomType) customTypeDao.createAndSave(attachmentClass, UserSecurityUtils.getCurrentTenant());
 
             while ((bytesRead = input.read(buffer)) != -1) {
                 output.write(buffer, 0, bytesRead);
@@ -310,18 +311,19 @@ class MyUploadHandler<P> implements UploadFinishedHandler {
                     currentBean, fieldName, null, attachmentClass
             );
             FindRelationQuery<P, AttachmentCustomType> query = new FindRelationQuery(findRelationParameter);
-            final Collection<AttachmentCustomType> attachments = customTypeDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")),UserSecurityUtils.getCurrentTenant());
+            final Collection<AttachmentCustomType> attachments = customTypeDao.runQuery(query, null, true, 0, Integer.parseInt(pageParameter.getConfig().get("uploadCountLimit")), UserSecurityUtils.getCurrentTenant());
 
             if (!attachments.isEmpty()) {
                 attachmentIC.addAll(attachments);
                 attachmentIC.refreshItems();
             }
             attachmentList.setHeight(attachmentList.size() + 1, Sizeable.Unit.EM);
+        } catch (DuplicateDataException ex) {
+            Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
         } catch (IOException ex) {
             Logger.getLogger(AttachmentCustomTypeUICreator.class.getName()).log(Level.SEVERE, null, ex);
         }
         //System.out.println("upload counter:" + c);
     }
 
-   
 }

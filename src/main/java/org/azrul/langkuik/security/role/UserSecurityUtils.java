@@ -61,7 +61,8 @@ public class UserSecurityUtils {
         org.apache.shiro.mgt.SecurityManager securityManager = factory.getInstance();
         SecurityUtils.setSecurityManager(securityManager);
         List<String> roles = extractRoles(emf);
-        storeRolesIntoDB(roles);
+        RoleDAO.insert(roles);
+        //storeRolesIntoDB(roles);
         roles.addAll(roles);
         
     }

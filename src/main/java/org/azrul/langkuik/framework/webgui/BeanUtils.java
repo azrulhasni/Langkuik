@@ -185,7 +185,7 @@ public class BeanUtils implements Serializable {
     }
 
     public boolean isFieldTypeRoot(Field pojoField) {
-        if (pojoField.getType().equals(Collection.class)) {
+        if (Collection.class.isAssignableFrom(pojoField.getType())) {
             Class targetClass = (Class) ((ParameterizedType) pojoField.getGenericType()).getActualTypeArguments()[0];
             return EntityUtils.isClassRoot(targetClass);
         } else {

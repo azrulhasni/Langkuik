@@ -13,12 +13,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Root;
 import org.azrul.langkuik.annotations.AutoIncrementConfig;
 import org.azrul.langkuik.annotations.WebField;
 import org.azrul.langkuik.dao.HibernateGenericDAO;
 import org.azrul.langkuik.framework.generator.Generator;
+import org.hibernate.exception.ConstraintViolationException;
 
 /**
  *
@@ -46,11 +48,20 @@ public class RoleDAO {
     }
 
     public static boolean isRoleExist(EntityManager em, String roleName) {
+       Role role = getRole(em, roleName);
+       if (role==null) return true; else return false;
+    }
+    
+    public static Role getRole(EntityManager em, String roleName) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         javax.persistence.criteria.CriteriaQuery<Role> criteria = cb.createQuery(Role.class);
         Root<Role> role = criteria.from(Role.class);
-        criteria.select(role).where(cb.equal(role.get("roleName"), roleName));
-        return !em.createQuery(criteria).getResultList().isEmpty();
+        try{
+            criteria.select(role).where(cb.equal(role.get("roleName"), roleName));
+        return em.createQuery(criteria).getSingleResult();
+        }catch(NoResultException e ){
+            return null;
+        }
     }
 
     public static List<Role> insert(List<String> roleNames) {
@@ -60,8 +71,12 @@ public class RoleDAO {
         try {
             em.getTransaction().begin();
             for (String roleName : roleNames) {
-                Role role = insert(em, roleName);
+                Role role = getRole(em,roleName);
+                if (role==null){
+                    insert(em, roleName);
+                }
                 roles.add(role);
+                
             }
             em.getTransaction().commit();
             return roles;
@@ -142,11 +157,12 @@ public class RoleDAO {
     public static void registerRole(String roleName) {
         Role role = new Role();
         role.setRoleName(roleName);
-
+       
         EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
         try {
             assignId(em, role);
-            em.getTransaction().begin();
+           
 
             em.merge(role);
             em.getTransaction().commit();

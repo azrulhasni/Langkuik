@@ -32,8 +32,8 @@ public interface DataAccessObject<T> {
     //<P> T createAndSave(DaoParameter<P, T> parameter);
     
     //Save
-    T save(T newObject);
-    Object saveWithRelation(Object newBean, Object parentBean, String parentToNewBeanField,RelationManager relationManager);
+    T save(T newObject) throws DuplicateDataException;
+    Object saveWithRelation(Object newBean, Object parentBean, String parentToNewBeanField,RelationManager relationManager) throws DuplicateDataException;
     
     //update
     <P> P associate(FindRelationParameter<P,T> frParam, T newBean, T oldBean);

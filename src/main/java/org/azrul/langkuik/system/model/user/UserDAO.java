@@ -101,6 +101,21 @@ public class UserDAO {
         }
     }
 
+    public static void assignId(Object object) {
+        EntityManager em = emf.createEntityManager();
+        try {
+
+            em.getTransaction().begin();
+            assignId(em, object);
+            em.getTransaction().commit();
+        } catch (Exception ex) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     private static void assignId(EntityManager em, Object object) throws IllegalArgumentException, InstantiationException, IllegalAccessException, SecurityException, InvocationTargetException, NoSuchMethodException {
         for (Field field : object.getClass().getDeclaredFields()) {
 
@@ -124,7 +139,7 @@ public class UserDAO {
     public static void registerAdmin(String username, String plainTextPassword) {
         User user = new User();
         user.setUsername(username);
-       
+
         User existingUser = getUserByUsername(username);
 
         EntityManager em = emf.createEntityManager();

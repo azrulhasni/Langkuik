@@ -39,9 +39,9 @@ import org.hibernate.search.annotations.Indexed;
         ,uniqueConstraints=@UniqueConstraint(columnNames={"rolename"})
         )
 @Indexed
-@WebEntity(name="user role",isRoot = true,  userMap={
+@WebEntity(name="role",isRoot = true,  userMap={
     @EntityUserMap(role="*",right=EntityRight.VIEW),
-    @EntityUserMap(role="ROLE_ADMIN",right=EntityRight.CREATE_UPDATE_DELETE)    
+    @EntityUserMap(role="ROLE_ADMIN",right=EntityRight.UPDATE)    
 })
 public class Role implements Serializable {
   /**

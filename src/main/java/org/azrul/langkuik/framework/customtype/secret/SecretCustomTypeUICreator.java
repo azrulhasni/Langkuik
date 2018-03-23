@@ -25,6 +25,7 @@ import org.azrul.langkuik.security.role.FieldState;
 import org.azrul.langkuik.system.security.HashAndSalt;
 import org.azrul.langkuik.system.model.user.Secret;
 import org.azrul.langkuik.system.model.user.SecretUtils;
+import org.azrul.langkuik.system.model.user.UserDAO;
 
 /**
  *
@@ -72,9 +73,15 @@ public class SecretCustomTypeUICreator<P> implements CustomTypeUICreator<P> {
                         field.setAccessible(true);
                         Secret secret = new Secret();
                         Secret currentSecret = (Secret) field.get(currentBean);
-                        secret.setId(currentSecret.getId());
-                        secret.setHashedPassword(has.getHashedPassword());
-                        secret.setSalt(has.getSalt().toString());
+                        if (currentSecret!=null){
+                            secret.setId(currentSecret.getId());
+                            secret.setHashedPassword(has.getHashedPassword());
+                            secret.setSalt(has.getSalt().toString());
+                        }else{
+                            UserDAO.assignId(secret);
+                            secret.setHashedPassword(has.getHashedPassword());
+                            secret.setSalt(has.getSalt().toString());
+                        }
                         
                         field.set(currentBean, secret);
                         window.close();
