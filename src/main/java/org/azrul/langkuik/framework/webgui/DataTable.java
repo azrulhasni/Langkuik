@@ -13,6 +13,7 @@ import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.VerticalLayout;
 import java.lang.reflect.Field;
@@ -28,6 +29,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.Id;
 import org.azrul.langkuik.annotations.Choice;
 import org.azrul.langkuik.annotations.WebField;
@@ -35,6 +38,7 @@ import org.azrul.langkuik.dao.DAOQuery;
 import org.azrul.langkuik.dao.DataAccessObject;
 import org.azrul.langkuik.dao.EntityUtils;
 import org.azrul.langkuik.framework.PageParameter;
+import org.azrul.langkuik.framework.exception.DuplicateDataException;
 import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.FieldState;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
@@ -132,7 +136,12 @@ public class DataTable<C> extends VerticalLayout {
             //if we need to still draw when table is empty, we need to still put one element in there
             //Vaadin limitation
             if (allData.isEmpty()) {
-                allData.add(dao.createNew(false,UserSecurityUtils.getCurrentTenant()));
+                try {
+                    allData.add(dao.createNew(false,UserSecurityUtils.getCurrentTenant()));
+                } catch (DuplicateDataException ex) {
+                    Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+                
+                }
             }
 
             //Put all data of type T into a table to be chosen
@@ -348,7 +357,12 @@ public class DataTable<C> extends VerticalLayout {
 
                             Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
                             if (tableData.isEmpty()) {
-                                tableData.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
+                                try {
+                                    tableData.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
+                                } catch (DuplicateDataException ex) {
+                                   Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+                
+                                }
                             }
                             itemContainer.setBeans(tableData);
                             itemContainer.refreshItems();

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.EntityManagerFactory;
 import org.azrul.langkuik.annotations.WebEntity;
 import org.azrul.langkuik.configs.Configuration;
@@ -36,6 +38,7 @@ import org.azrul.langkuik.dao.EntityUtils;
 import org.azrul.langkuik.dao.HibernateGenericDAO;
 import org.azrul.langkuik.framework.PageParameter;
 import org.azrul.langkuik.framework.customtype.attachment.AttachmentCustomType;
+import org.azrul.langkuik.framework.exception.DuplicateDataException;
 import org.azrul.langkuik.framework.relationship.RelationManagerFactory;
 import org.azrul.langkuik.framework.webgui.BeanView;
 import org.azrul.langkuik.framework.webgui.SearchResultView;
@@ -263,15 +266,23 @@ public class Langkuik implements Serializable {
                         public void menuSelected(MenuBar.MenuItem selectedItem) {
                             pageParameter.setRootClass(rootClass); //save the root element
                             pageParameter.setType(WorkType.CREATE_NEW);
-                            Object object = dao.createNew(UserSecurityUtils.getCurrentTenant());
-                            BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
-                            String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
-                            navigator.addView(targetView, (View) createNewView);
-                            history.clear();
-                            history.push(new History("START", "Start"));
-                            History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
-                            history.push(his);
-                            navigator.navigateTo(targetView);
+                            Object object = null;
+                            try {
+                                object = dao.createNew(UserSecurityUtils.getCurrentTenant());
+
+                                BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                                String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
+                                navigator.addView(targetView, (View) createNewView);
+                                history.clear();
+                                history.push(new History("START", "Start"));
+                                History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
+                                history.push(his);
+                                navigator.navigateTo(targetView);
+                            } catch (DuplicateDataException ex) {
+                                Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+
+                                Logger.getLogger(Langkuik.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
                     });
 //                    if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
@@ -300,15 +311,23 @@ public class Langkuik implements Serializable {
                     public void menuSelected(MenuBar.MenuItem selectedItem) {
                         pageParameter.setRootClass(rootClass); //save the root element
                         pageParameter.setType(WorkType.CREATE_NEW);
-                        Object object = dao.createNew(UserSecurityUtils.getCurrentTenant());
-                        BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
-                        String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
-                        navigator.addView(targetView, (View) createNewView);
-                        history.clear();
-                        history.push(new History("START", "Start"));
-                        History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
-                        history.push(his);
-                        navigator.navigateTo(targetView);
+                        Object object = null;
+                        try {
+                            object = dao.createNew(UserSecurityUtils.getCurrentTenant());
+                            BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                            String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
+                            navigator.addView(targetView, (View) createNewView);
+                            history.clear();
+                            history.push(new History("START", "Start"));
+                            History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
+                            history.push(his);
+                            navigator.navigateTo(targetView);
+                        } catch (DuplicateDataException ex) {
+                            Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+
+                            Logger.getLogger(Langkuik.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
                     }
                 });
                 if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {

@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -98,16 +99,16 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
         T bean = null;
         EntityManager em = emf.createEntityManager();
         bean = em.find(classOfEntity, id);
-        if (tenantId!=null){
+        if (tenantId != null) {
             Field tenantField = EntityUtils.getTenantFieldName(bean.getClass());
-            if (tenantField!=null){
+            if (tenantField != null) {
                 try {
-                    String tenantIdFromBean  = (String) tenantField.get(bean);
-                    if (tenantIdFromBean!=null){
-                        if (!tenantIdFromBean.equals(tenantId)){
+                    String tenantIdFromBean = (String) tenantField.get(bean);
+                    if (tenantIdFromBean != null) {
+                        if (!tenantIdFromBean.equals(tenantId)) {
                             return null;
                         }
-                    }else{
+                    } else {
                         return null;
                     }
                 } catch (IllegalArgumentException ex) {
@@ -116,18 +117,18 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
                     Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-        
+
         }
         em.close();
         return bean;
     }
 
     //no persistence
-    private T createNew(Class<T> clazz, boolean withId, String tenantId) {
+    private T createNew(Class<T> clazz, boolean withId, String tenantId) throws DuplicateDataException {
         EntityManager em = emf.createEntityManager();
         try {
             T bean = clazz.getConstructor().newInstance(new Object[]{});
-            
+
             //find an Id
             if (withId == true) {
                 for (Field field : clazz.getDeclaredFields()) {
@@ -150,22 +151,32 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
                     }
                 }
             }
-            
+
             //set tenant
-            if (tenantId!=null && !("").equals(tenantId)){
+            if (tenantId != null && !("").equals(tenantId)) {
                 for (Field field : clazz.getDeclaredFields()) {
                     if (field.getAnnotation(WebField.class) != null) {
-                        if (field.getAnnotation(WebField.class).tenantId() ==true) {
-                              field.setAccessible(true);
-                              field.set(bean, tenantId);
+                        if (field.getAnnotation(WebField.class).tenantId() == true) {
+                            field.setAccessible(true);
+                            field.set(bean, tenantId);
                         }
                     }
                 }
             }
             return bean;
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            em.getTransaction().rollback();
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, ex);
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+
+            if (ex.getCause() != null) {
+                if (ex.getCause().getCause() != null) {
+                    if (ex.getCause().getCause().getClass().equals(ConstraintViolationException.class)) {
+                        throw new DuplicateDataException();
+                    }
+                }
+            }
         }
         em.close();
         return null;
@@ -173,12 +184,12 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
     }
 
     //no persistence
-    public T createNew(String tenantId) {
-        return createNew(classOfEntity,true, tenantId);
+    public T createNew(String tenantId) throws DuplicateDataException {
+        return createNew(classOfEntity, true, tenantId);
     }
 
     //no persistence
-    public T createNew(boolean giveId,String tenantId) {
+    public T createNew(boolean giveId, String tenantId) throws DuplicateDataException {
         T bean = createNew(classOfEntity, giveId, tenantId);
         return bean;
     }
@@ -247,18 +258,26 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
         EntityManager em = emf.createEntityManager();
 
         T savedObject = null;
-        em.getTransaction().begin();
-        try {    
+        try {
+            em.getTransaction().begin();
             savedObject = em.merge(newObject);
             em.getTransaction().commit();
             return savedObject;
-        }catch(ConstraintViolationException e){
-            throw new DuplicateDataException();
-        }catch (Exception e) {
+
+        } catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
-            if (em.getTransaction().isActive()){
+            if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
+
+            if (e.getCause() != null) {
+                if (e.getCause().getCause() != null) {
+                    if (e.getCause().getCause().getClass().equals(ConstraintViolationException.class)) {
+                        throw new DuplicateDataException();
+                    }
+                }
+            }
+
         } finally {
 
             em.close();
@@ -338,10 +357,10 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 //        return null;
 //    }
     @Override
-    public Object createAndSave(Class c, String tenantId) {
+    public Object createAndSave(Class c, String tenantId) throws DuplicateDataException {
         EntityManager em = emf.createEntityManager();
         try {
-            Object bean = createNew(c,true,tenantId);//call default constructor
+            Object bean = createNew(c, true, tenantId);//call default constructor
             em.getTransaction().begin();
             em.persist(bean);
             em.flush();
@@ -353,7 +372,17 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
             return bean;
         } catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
-            em.getTransaction().rollback();
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+
+            if (e.getCause() != null) {
+                if (e.getCause().getCause() != null) {
+                    if (e.getCause().getCause().getClass().equals(ConstraintViolationException.class)) {
+                        throw new DuplicateDataException();
+                    }
+                }
+            }
         } finally {
             em.close();
 
@@ -383,13 +412,13 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 //        return newObject;
 //    }
     @Override
-    public <P> Collection runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset,String tenantId) {
-        return query.doQuery(emf, orderBy, asc, startIndex, offset,tenantId);
+    public <P> Collection runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
+        return query.doQuery(emf, orderBy, asc, startIndex, offset, tenantId);
     }
 
     @Override
-    public <P> Long countQueryResult(DAOQuery<P, T> query,String tenantId) {
-        return query.count(emf,tenantId);
+    public <P> Long countQueryResult(DAOQuery<P, T> query, String tenantId) {
+        return query.count(emf, tenantId);
 
     }
 
@@ -456,11 +485,21 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 
             em.getTransaction().commit();
             return newBeanFromDB;
-        }catch (ConstraintViolationException e) {
-            throw new DuplicateDataException();
-        }  catch (Exception e) {
+        } catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
-            em.getTransaction().rollback();
+            Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+
+            if (e.getCause() != null) {
+                if (e.getCause().getCause() != null) {
+                    if (e.getCause().getCause().getClass().equals(ConstraintViolationException.class)) {
+                        throw new DuplicateDataException();
+                    }
+                }
+            }
+
         } finally {
             em.close();
         }
@@ -531,7 +570,7 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
     }
 
     @Override
-    public Object saveWithRelation(Object newBean, Object parentBean, String parentToNewBeanField, RelationManager relationManager)throws DuplicateDataException {
+    public Object saveWithRelation(Object newBean, Object parentBean, String parentToNewBeanField, RelationManager relationManager) throws DuplicateDataException {
         EntityManager em = emf.createEntityManager();
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         try {
@@ -552,11 +591,19 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
             }
             em.getTransaction().commit();
             return parentBeanFromDB;
-        } catch (ConstraintViolationException e) {
-            throw new DuplicateDataException();
         } catch (Exception e) {
             Logger.getLogger(HibernateGenericDAO.class.getName()).log(Level.SEVERE, null, e);
-            em.getTransaction().rollback();
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+
+            if (e.getCause() != null) {
+                if (e.getCause().getCause() != null) {
+                    if (e.getCause().getCause().getClass().equals(ConstraintViolationException.class)) {
+                        throw new DuplicateDataException();
+                    }
+                }
+            }
         } finally {
             em.close();
         }

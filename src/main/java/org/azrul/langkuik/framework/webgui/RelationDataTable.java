@@ -5,15 +5,19 @@
  */
 package org.azrul.langkuik.framework.webgui;
 
+import com.vaadin.ui.Notification;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.azrul.langkuik.configs.Configuration;
 import org.azrul.langkuik.dao.DataAccessObject;
 import org.azrul.langkuik.dao.FindRelationParameter;
 import org.azrul.langkuik.dao.FindRelationQuery;
 import org.azrul.langkuik.framework.PageParameter;
+import org.azrul.langkuik.framework.exception.DuplicateDataException;
 import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
@@ -48,7 +52,13 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
+            try {
+                data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
+            } catch (DuplicateDataException ex) {
+                Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+                
+                Logger.getLogger(RelationDataTable.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
@@ -73,7 +83,13 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
         if (data.isEmpty()) {
             data = new ArrayList<>();
-            data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
+            try {
+                data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
+            } catch (DuplicateDataException ex) {
+                 Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+
+                Logger.getLogger(RelationDataTable.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();

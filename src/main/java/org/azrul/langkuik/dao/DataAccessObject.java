@@ -24,10 +24,10 @@ public interface DataAccessObject<T> {
     T refresh(T entity);
    
     //Create
-    T createNew(String tenantId); //transient
-    T createNew(boolean giveId, String tenantId); //transient
+    T createNew(String tenantId) throws DuplicateDataException; //transient
+    T createNew(boolean giveId, String tenantId) throws DuplicateDataException ; //transient
     //T createAndSave();
-    Object createAndSave(Class c, String tenantId);
+    Object createAndSave(Class c, String tenantId) throws DuplicateDataException;
     //<P> T createAndSave(P parentObject, String parentToCurrentField, RelationManager<P, T> relationManager);
     //<P> T createAndSave(DaoParameter<P, T> parameter);
     
