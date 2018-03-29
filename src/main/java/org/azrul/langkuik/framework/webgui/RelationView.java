@@ -176,8 +176,10 @@ public class RelationView<P, C> extends VerticalView {
                         @Override
                         public void buttonClick(Button.ClickEvent event) {
                             Collection<C> allDataList = allDataTableLayout.getTableValues();
-                            relationTableLayout.associateEntities(allDataList, choiceType);
-                            associateChildrenWindow.close();
+                            if (!allDataList.isEmpty()){
+                                relationTableLayout.associateEntities(allDataList, choiceType);
+                                associateChildrenWindow.close();
+                            }
                         }
                     });
                     associateToCurrentBtn.setId(associateToCurrentBtn.getCaption());

@@ -226,6 +226,12 @@ public class FindAnyEntityQuery<T> implements DAOQuery<T, T>, Serializable {
                     .setSort(sort)
                     .setFirstResult(startIndex)
                     .setMaxResults(offset);
+            
+            //-------------------------------------------------------------------
+           
+       
+            
+            //-------------------------------------------------------------------
 
             List<T> results = jpaQuery.getResultList();
             fullTextEntityManager.close();

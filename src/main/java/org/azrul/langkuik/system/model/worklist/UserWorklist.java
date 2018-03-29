@@ -17,19 +17,16 @@ package org.azrul.langkuik.system.model.worklist;
 
 import java.io.Serializable;
 import java.util.Set;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.azrul.langkuik.annotations.AutoIncrementConfig;
-import org.azrul.langkuik.annotations.Choice;
 import org.azrul.langkuik.annotations.DerivedField;
 import org.azrul.langkuik.annotations.EntityUserMap;
 import org.azrul.langkuik.annotations.FieldUserMap;
@@ -39,7 +36,6 @@ import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.FieldRight;
 import org.azrul.langkuik.system.model.identity.LangkuikIdGenerator;
 import org.azrul.langkuik.system.model.role.Role;
-import org.azrul.langkuik.system.model.user.Secret;
 import org.hibernate.envers.Audited;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
@@ -49,7 +45,7 @@ import org.hibernate.search.annotations.Indexed;
 @Table(name = "Worklist",schema = "SYSTEM")
 @XmlRootElement
 @Indexed
-@WebEntity(name="worklist", userMap={
+@WebEntity(name="worklist", isRoot = true, userMap={
     @EntityUserMap(role="ROLE_ADMIN",right=EntityRight.UPDATE)
 })
 public class UserWorklist implements Serializable {
@@ -73,25 +69,7 @@ public class UserWorklist implements Serializable {
     @WebField(name="worklist name",rank=1, displayInTable=true, required=true)
     protected String worklistName;
 
- 
-     
-     
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn()
-    @WebField(name = "roles", rank = 5,
-            userMap = {
-                @FieldUserMap(role = "*", right = FieldRight.VIEW),
-                @FieldUserMap(role = "ROLE_ADMIN", right = FieldRight.UPDATE),
-            }
-    )
-    protected Set<Role> rolesCollection;
-     
-    
-
-  
-    
-    
-    @DerivedField(name="Roles", rank=4)
+    @DerivedField(name="Roles", rank=2)
     public String getRoles(){
         StringBuilder sb = new StringBuilder();
         if (rolesCollection.size()==1){
@@ -102,6 +80,16 @@ public class UserWorklist implements Serializable {
         }
         return sb.toString();
     }
+     
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn()
+    @WebField(name = "roles", rank = 3,
+            userMap = {
+                @FieldUserMap(role = "*", right = FieldRight.VIEW),
+                @FieldUserMap(role = "ROLE_ADMIN", right = FieldRight.UPDATE),
+            }
+    )
+    protected Set<Role> rolesCollection;
 
     public Long getId() {
         return id;
@@ -126,5 +114,7 @@ public class UserWorklist implements Serializable {
     public void setRolesCollection(Set<Role> rolesCollection) {
         this.rolesCollection = rolesCollection;
     }
+    
+    
 
 }

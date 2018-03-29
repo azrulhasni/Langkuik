@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -46,8 +47,13 @@ import org.azrul.langkuik.framework.webgui.breadcrumb.BreadCrumbBuilder;
 import org.azrul.langkuik.framework.webgui.breadcrumb.History;
 import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
+import org.azrul.langkuik.system.model.role.Role;
+import org.azrul.langkuik.system.model.role.RoleDAO;
 import org.azrul.langkuik.system.model.user.User;
+import org.azrul.langkuik.system.model.user.UserDAO;
 import org.azrul.langkuik.system.model.user.UserSearchResultView;
+import org.azrul.langkuik.system.model.worklist.UserWorklist;
+import org.azrul.langkuik.system.model.worklist.UserWorklistDAO;
 import org.vaadin.dialogs.ConfirmDialog;
 
 public class Langkuik implements Serializable {
@@ -74,6 +80,7 @@ public class Langkuik implements Serializable {
         this.customTypeInterfaces = customTypeInterfaces;
         this.loginPage = loginPage;
         this.textResourceBundle = textResourceBundle;
+        this.worklistType = worklist;
     }
 
     //default login page (single or multi tenant)
@@ -94,7 +101,7 @@ public class Langkuik implements Serializable {
             this.loginPage = getSingleTenantLoginForm();
         }
         this.textResourceBundle = textResourceBundle;
-
+        this.worklistType = worklist;
     }
 
     //default login page (single or multi tenant) and default text
@@ -103,7 +110,7 @@ public class Langkuik implements Serializable {
             final RelationManagerFactory relationManagerFactory,
             final List<Class<?>> customTypeInterfaces,
             final Boolean isMultiTenant,
-            final Class worklistType) {
+            final Class worklist) {
         this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
 
         this.emf = emf;
@@ -115,7 +122,7 @@ public class Langkuik implements Serializable {
         } else {
             this.loginPage = getSingleTenantLoginForm();
         }
-
+        this.worklistType = worklist;
     }
 
     //default login page (single or multi tenant), default text, default customTypeInterface
@@ -123,7 +130,7 @@ public class Langkuik implements Serializable {
             final UI ui,
             final RelationManagerFactory relationManagerFactory,
             final Boolean isMultiTenant,
-            final Class worklistType) {
+            final Class worklist) {
         this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
 
         this.emf = emf;
@@ -135,10 +142,18 @@ public class Langkuik implements Serializable {
         } else {
             this.loginPage = getSingleTenantLoginForm();
         }
+        this.worklistType = worklist;
     }
 
     public void init() {
+        UserDAO.setEMF(this.emf);
+        RoleDAO.setEMF(this.emf);
+        UserWorklistDAO.setEMF(this.emf);
+        for (Object worklistName : EnumSet.allOf(worklistType)) {
+            UserWorklistDAO.registerWorklist(worklistName.toString());
+        }
         UserSecurityUtils.init(this.emf);
+
         ui.setContent(loginPage);
 
     }
@@ -257,55 +272,60 @@ public class Langkuik implements Serializable {
         MenuBar.MenuItem manageCurrentUser = menubar.addItem(pageParameter.getLocalisedText("menu.user"), null);
 
         for (final Class rootClass : rootClasses) {
+
             final WebEntity myObject = (WebEntity) rootClass.getAnnotation(WebEntity.class);
             final DataAccessObject<?> dao = new HibernateGenericDAO<>(emf, rootClass);
+
+            int state = 0;
+            //manage state
             if (UserSecurityUtils.hasRole("ROLE_ADMIN")) {
+                state = 1;
                 if (rootClass.equals(User.class)) {
-                    create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
-                        @Override
-                        public void menuSelected(MenuBar.MenuItem selectedItem) {
-                            pageParameter.setRootClass(rootClass); //save the root element
-                            pageParameter.setType(WorkType.CREATE_NEW);
-                            Object object = null;
-                            try {
-                                object = dao.createNew(UserSecurityUtils.getCurrentTenant());
-
-                                BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
-                                String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
-                                navigator.addView(targetView, (View) createNewView);
-                                history.clear();
-                                history.push(new History("START", "Start"));
-                                History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
-                                history.push(his);
-                                navigator.navigateTo(targetView);
-                            } catch (DuplicateDataException ex) {
-                                Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
-
-                                Logger.getLogger(Langkuik.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                        }
-                    });
-//                    if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
-//
-//                        view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
-//                            @Override
-//                            public void menuSelected(MenuBar.MenuItem selectedItem) {
-//                                pageParameter.setRootClass(rootClass);
-//                                pageParameter.setType(WorkType.EDIT);
-//                                SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
-//                                String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
-//                                navigator.addView(targetView, (View) seeApplicationView);
-//                                history.clear();
-//                                history.push(new History("START", "Start"));
-//                                History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
-//                                history.push(his);
-//                                navigator.navigateTo(targetView);
-//                            }
-//                        });
-//                    }
+                    state = 2;
                 }
-            } else if (UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE
-                    || UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE_DELETE) {
+            } else {
+                state = 3;
+                if (rootClass.equals(User.class) || rootClass.equals(Role.class) || rootClass.equals(UserWorklist.class)) {
+                    state = 4;
+                } else {
+                        state = 5;
+                        if (UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE
+                                || UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE_DELETE) {
+                            state = 6;
+                        }else if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
+                            state = 8;
+                        }
+                    
+                }
+            }
+            //apply state
+            if (state == 2) {  //user is admin and we dealing with user object
+                create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
+                    @Override
+                    public void menuSelected(MenuBar.MenuItem selectedItem) {
+                        pageParameter.setRootClass(rootClass); //save the root element
+                        pageParameter.setType(WorkType.CREATE_NEW);
+                        Object object = null;
+                        try {
+                            object = dao.createNew(UserSecurityUtils.getCurrentTenant());
+
+                            BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                            String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
+                            navigator.addView(targetView, (View) createNewView);
+                            history.clear();
+                            history.push(new History("START", "Start"));
+                            History his = new History(targetView, pageParameter.getLocalisedText("menu.create.new", myObject.name()));
+                            history.push(his);
+                            navigator.navigateTo(targetView);
+                        } catch (DuplicateDataException ex) {
+                            Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
+
+                            Logger.getLogger(Langkuik.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                });
+            } 
+            if (state == 6) { //non admin user with CREATE and UPDATE rights
                 create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
                     @Override
                     public void menuSelected(MenuBar.MenuItem selectedItem) {
@@ -330,26 +350,24 @@ public class Langkuik implements Serializable {
 
                     }
                 });
-                if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
-
-                    view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
-                        @Override
-                        public void menuSelected(MenuBar.MenuItem selectedItem) {
-                            pageParameter.setRootClass(rootClass);
-                            pageParameter.setType(WorkType.EDIT);
-                            SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
-                            String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
-                            navigator.addView(targetView, (View) seeApplicationView);
-                            history.clear();
-                            history.push(new History("START", "Start"));
-                            History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
-                            history.push(his);
-                            navigator.navigateTo(targetView);
-                        }
-                    });
-                }
+            } 
+            if (state == 8 || state ==6) { //non admin and vieweing rights
+                view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
+                    @Override
+                    public void menuSelected(MenuBar.MenuItem selectedItem) {
+                        pageParameter.setRootClass(rootClass);
+                        pageParameter.setType(WorkType.EDIT);
+                        SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
+                        String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
+                        navigator.addView(targetView, (View) seeApplicationView);
+                        history.clear();
+                        history.push(new History("START", "Start"));
+                        History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
+                        history.push(his);
+                        navigator.navigateTo(targetView);
+                    }
+                });
             }
-
         }
 
         manageCurrentUser.addItem(pageParameter.getLocalisedText("menu.user.manage_myself"), new MenuBar.Command() {
@@ -388,6 +406,22 @@ public class Langkuik implements Serializable {
 
                 }
             });
+            manageCurrentUser.addItem(pageParameter.getLocalisedText("menu.user.manage_worklist_access"), new MenuBar.Command() {
+                @Override
+                public void menuSelected(MenuBar.MenuItem selectedItem) {
+                    pageParameter.setRootClass(UserWorklist.class);
+                    pageParameter.setType(WorkType.EDIT);
+                    SearchResultView<UserWorklist> seeApplicationView = new SearchResultView<>(UserWorklist.class, pageParameter);
+                    String targetView = "VIEW_WORKLIST_ACCESS_" + UUID.randomUUID().toString();
+                    navigator.addView(targetView, (View) seeApplicationView);
+                    history.clear();
+                    history.push(new History("START", "Start"));
+                    History his = new History(targetView, "Worklist Access");
+                    history.push(his);
+                    navigator.navigateTo(targetView);
+
+                }
+            });
         }
 
         menubar.addItem(pageParameter.getLocalisedText("menu.logout"), null).addItem(pageParameter.getLocalisedText("menu.logout"), new MenuBar.Command() {
@@ -399,8 +433,6 @@ public class Langkuik implements Serializable {
                     @Override
                     public void onClose(ConfirmDialog dialog) {
                         if (dialog.isConfirmed()) {
-//                                    HttpServletRequest req = (HttpServletRequest) VaadinService.getCurrentRequest();
-//                                    HttpServletResponse resp = (HttpServletResponse) VaadinService.getCurrentResponse();
                             UserSecurityUtils.logOutUser(ui);
 
                         }

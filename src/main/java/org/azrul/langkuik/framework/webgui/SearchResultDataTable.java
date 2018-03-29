@@ -194,25 +194,23 @@ public class SearchResultDataTable<C> extends DataTable<C> {
                     allData = new ArrayList<>();
                     try {
                         allData.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
-                        bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
-                        itemContainer.setBeans(allData);
-                        itemContainer.refreshItems();
-                        table.setPageLength(itemCountPerPage);
-                        table.setPageLength(itemCountPerPage);
-                        currentTableIndex = 0;
-                        int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
-                        if (bigTotal % itemCountPerPage == 0) {
-                            lastPage--;
-                        }
-                        int currentUpdatedPage = currentTableIndex / itemCountPerPage;
-                        pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (currentUpdatedPage + 1), (lastPage + 1)));
                     } catch (DuplicateDataException ex) {
                         Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
-
                         Logger.getLogger(SearchResultDataTable.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-
+                bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
+                itemContainer.setBeans(allData);
+                itemContainer.refreshItems();
+                table.setPageLength(itemCountPerPage);
+                table.setPageLength(itemCountPerPage);
+                currentTableIndex = 0;
+                int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
+                if (bigTotal % itemCountPerPage == 0) {
+                    lastPage--;
+                }
+                int currentUpdatedPage = currentTableIndex / itemCountPerPage;
+                pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (currentUpdatedPage + 1), (lastPage + 1)));
             }
         });
         searchBtn.setId(searchBtn.getCaption());
@@ -227,22 +225,21 @@ public class SearchResultDataTable<C> extends DataTable<C> {
             data = new ArrayList<>();
             try {
                 data.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
-                itemContainer.setBeans(data);
-                itemContainer.refreshItems();
-                bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
-
-                int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
-                if (bigTotal % itemCountPerPage == 0) {
-                    lastPage--;
-                }
-                int currentUpdatedPage = currentTableIndex / itemCountPerPage;
-                pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (currentUpdatedPage + 1), (lastPage + 1)));
-                table.setPageLength(itemCountPerPage);
             } catch (DuplicateDataException ex) {
                 Notification.show(pageParameter.getResourceBundle().getString("dialog.duplicateData"), Notification.Type.WARNING_MESSAGE);
-
                 Logger.getLogger(SearchResultDataTable.class.getName()).log(Level.SEVERE, null, ex);
             }
+            itemContainer.setBeans(data);
+            itemContainer.refreshItems();
+            bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
+
+            int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
+            if (bigTotal % itemCountPerPage == 0) {
+                lastPage--;
+            }
+            int currentUpdatedPage = currentTableIndex / itemCountPerPage;
+            pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (currentUpdatedPage + 1), (lastPage + 1)));
+            table.setPageLength(itemCountPerPage);
         }
 
     }

@@ -79,23 +79,25 @@ public class UserWorklistDAO {
    
 
     public static void registerWorklist(String worklistName) {
-//        User user = new User();
-//        user.setUsername(username);
-//
-//        EntityManager em = emf.createEntityManager();
-//        try {
-//            assignId(em, user);
-//            em.getTransaction().begin();
-//            generatePassword(user, plainTextPassword, em);
-//            em.merge(user);
-//            em.getTransaction().commit();
-//
-//        } catch (Exception e) {
-//            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, e);
-//            em.getTransaction().rollback();
-//        } finally {
-//
-//            em.close();
-//        }
+       UserWorklist uw = new UserWorklist();
+        uw.setWorklistName(worklistName);
+
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            assignId(em, uw);
+            
+            em.merge(uw);
+            em.getTransaction().commit();
+
+        } catch (Exception e) {
+            Logger.getLogger(UserWorklistDAO.class.getName()).log(Level.SEVERE, null, e);
+            if (em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+        } finally {
+
+            em.close();
+        }
     }
 }

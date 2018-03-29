@@ -95,6 +95,9 @@ public class UserDAO {
         } catch (Exception e) {
             Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, e);
             em.getTransaction().rollback();
+            if (em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
         } finally {
 
             em.close();
@@ -163,8 +166,10 @@ public class UserDAO {
             }
 
         } catch (Exception e) {
-            Logger.getLogger(RoleDAO.class.getName()).log(Level.SEVERE, null, e);
-            em.getTransaction().rollback();
+           Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, e);
+            if (em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
         } finally {
 
             em.close();

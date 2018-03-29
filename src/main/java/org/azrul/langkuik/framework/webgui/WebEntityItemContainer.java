@@ -7,7 +7,9 @@ package org.azrul.langkuik.framework.webgui;
 
 import com.vaadin.data.util.BeanItemContainer;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
+import org.azrul.langkuik.annotations.DerivedField;
 import org.azrul.langkuik.annotations.WebField;
 import org.azrul.langkuik.dao.EntityUtils;
 
@@ -28,9 +30,8 @@ public class WebEntityItemContainer<BEANTYPE> extends BeanItemContainer<BEANTYPE
 
     public WebEntityItemContainer(Class<BEANTYPE> type, Collection<BEANTYPE> collection) throws IllegalArgumentException {
         super(type, collection);
-
-        Field[] fields = type.getDeclaredFields();
-        for (Field field : fields) {
+        //collect nested fields
+        for (Field field : type.getDeclaredFields()) {
             WebField webField = (WebField) field.getAnnotation(WebField.class);
             if (webField != null) {
                 if (webField.allowNested() == true && !field.getType().isAssignableFrom(Collection.class)) {
@@ -44,6 +45,7 @@ public class WebEntityItemContainer<BEANTYPE> extends BeanItemContainer<BEANTYPE
                 }
             }
         }
+        
     }
 
     public void refreshItems() {

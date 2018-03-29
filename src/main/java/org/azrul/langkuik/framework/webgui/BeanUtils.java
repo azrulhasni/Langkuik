@@ -47,9 +47,15 @@ public class BeanUtils implements Serializable {
         for (Field field : classOfBean.getDeclaredFields()) {
             if (field.isAnnotationPresent(WebField.class)) {
                 WebField webField = field.getAnnotation(WebField.class);
-
                 FieldContainer fieldContainer = new FieldContainer(webField, field);
                 group.put(webField.rank(), fieldContainer);
+            }
+        }
+        for (Method method : classOfBean.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(DerivedField.class)) {
+                DerivedField derField = method.getAnnotation(DerivedField.class);
+                DataElementContainer methodContainer = new DerivedFieldContainer(derField, method);
+                group.put(derField.rank(), methodContainer);
 
             }
         }
@@ -71,18 +77,18 @@ public class BeanUtils implements Serializable {
 
             }
         }
-        for (Method method : classOfBean.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(DerivedField.class)) {
-                DerivedField derField = method.getAnnotation(DerivedField.class);
-                String group = derField.group();
-                if (!groups.containsKey(group)) {
-                    groups.put(group, new TreeMap<Integer, DataElementContainer>());
-                }
-                DataElementContainer methodContainer = new DerivedFieldContainer(derField, method);
-                groups.get(group).put(derField.rank(), methodContainer);
-
-            }
-        }
+//        for (Method method : classOfBean.getDeclaredMethods()) {
+//            if (method.isAnnotationPresent(DerivedField.class)) {
+//                DerivedField derField = method.getAnnotation(DerivedField.class);
+//                String group = derField.group();
+//                if (!groups.containsKey(group)) {
+//                    groups.put(group, new TreeMap<Integer, DataElementContainer>());
+//                }
+//                DataElementContainer methodContainer = new DerivedFieldContainer(derField, method);
+//                groups.get(group).put(derField.rank(), methodContainer);
+//
+//            }
+//        }
         return groups;
     }
     
