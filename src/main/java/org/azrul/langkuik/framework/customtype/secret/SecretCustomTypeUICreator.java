@@ -32,16 +32,16 @@ import org.azrul.langkuik.system.model.user.UserDAO;
  * @author azrulm
  * @param <P>
  */
-public class SecretCustomTypeUICreator<P> implements CustomTypeUICreator<P> {
+public class SecretCustomTypeUICreator<P,W> implements CustomTypeUICreator<P,W> {
 
     @Override
     public Component createUIForForm(final P currentBean,
             final Class<? extends CustomType> secretClass,
             final String pojoFieldName,
             final BeanView beanView,
-            final DataAccessObject<P> conatainerClassDao,
-            final DataAccessObject<? extends CustomType> customTypeDao,
-            final PageParameter pageParameter,
+            final DataAccessObject<P,W> conatainerClassDao,
+            final DataAccessObject<? extends CustomType,W> customTypeDao,
+            final PageParameter<W> pageParameter,
             final FieldState fieldState,
             final Window window) {
 

@@ -23,6 +23,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import org.azrul.langkuik.annotations.AutoIncrementConfig;
 import org.azrul.langkuik.annotations.WebField;
@@ -35,7 +36,7 @@ import org.azrul.langkuik.system.model.user.UserDAO;
  * @author Azrul
  */
 public class UserWorklistDAO {
-    
+
     private static EntityManagerFactory emf;
 
     public static void setEMF(EntityManagerFactory e) {
@@ -63,36 +64,40 @@ public class UserWorklistDAO {
     }
 
     public static UserWorklist getWorklistByWorklistName(String worklistName) {
-        EntityManager em = emf.createEntityManager();
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        javax.persistence.criteria.CriteriaQuery<UserWorklist> criteria = cb.createQuery(UserWorklist.class);
-        Root<UserWorklist> worklist = criteria.from(UserWorklist.class);
-        criteria.select(worklist).where(cb.equal(worklist.get("worklistName"), worklistName));
 
         try {
-            return em.createQuery(criteria).getSingleResult();
+            EntityManager em = emf.createEntityManager();
+            UserWorklist uw = getWorklistByWortklistName(em, worklistName);
+            return uw;
         } catch (NoResultException e) {
             return null;
         }
     }
 
-   
+    private static UserWorklist getWorklistByWortklistName(EntityManager em, String worklistName) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        javax.persistence.criteria.CriteriaQuery<UserWorklist> criteria = cb.createQuery(UserWorklist.class);
+        Root<UserWorklist> worklist = criteria.from(UserWorklist.class);
+        criteria.select(worklist).where(cb.equal(worklist.get("worklistName"), worklistName));
+        return (UserWorklist) em.createQuery(criteria).getSingleResult();
+    }
 
     public static void registerWorklist(String worklistName) {
-       UserWorklist uw = new UserWorklist();
+        UserWorklist uw = new UserWorklist();
         uw.setWorklistName(worklistName);
 
         EntityManager em = emf.createEntityManager();
         try {
-            em.getTransaction().begin();
-            assignId(em, uw);
-            
-            em.merge(uw);
-            em.getTransaction().commit();
-
+            UserWorklist oldUw = getWorklistByWortklistName(em, worklistName);
+            if (oldUw == null) {
+                em.getTransaction().begin();
+                assignId(em, uw);
+                em.merge(uw);
+                em.getTransaction().commit();
+            }
         } catch (Exception e) {
             Logger.getLogger(UserWorklistDAO.class.getName()).log(Level.SEVERE, null, e);
-            if (em.getTransaction().isActive()){
+            if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
         } finally {

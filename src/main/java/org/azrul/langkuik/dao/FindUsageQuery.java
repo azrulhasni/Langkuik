@@ -35,7 +35,7 @@ import org.azrul.langkuik.framework.relationship.EntityRelationUtils;
  * @author azrulm
  * @param <T>
  */
-public class FindUsageQuery<P, C> implements DAOQuery<P, C>, Serializable {
+public class FindUsageQuery<P, C, W> implements DAOQuery<P, C, W>, Serializable {
 
     private C currentBean;
     private Class<P> parentClass;
@@ -49,13 +49,13 @@ public class FindUsageQuery<P, C> implements DAOQuery<P, C>, Serializable {
 
     
      @Override
-    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
+    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset, String tenantId, W worklist) {
         this.emf = emf;
         return findUsage(getCurrentBean(),getParentClass(), orderBy, asc, startIndex, offset);
     }
 
     @Override
-    public Long count(EntityManagerFactory emf, String tenantId) {
+    public Long count(EntityManagerFactory emf, String tenantId, W worklist) {
         this.emf = emf;
        return countUsage(getCurrentBean(),getParentClass());
     }

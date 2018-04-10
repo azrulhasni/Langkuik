@@ -43,7 +43,7 @@ import org.hibernate.search.annotations.Indexed;
     @EntityUserMap(role="*",right=EntityRight.VIEW),
     @EntityUserMap(role="ROLE_ADMIN",right=EntityRight.UPDATE)    
 })
-public class Role implements Serializable {
+public class Role implements Serializable, Comparable<Role> {
   /**
    * 
    */
@@ -102,6 +102,13 @@ public class Role implements Serializable {
 //    public void setUsers(Set<User> users) {
 //        this.users = users;
 //    }
+
+   
+
+    @Override
+    public int compareTo(Role o) {
+      return id.compareTo(o.id);
+    }
 
    
 

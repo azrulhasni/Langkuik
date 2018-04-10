@@ -40,18 +40,18 @@ import org.vaadin.dialogs.ConfirmDialog;
  * @param <P>
  * @param <C>
  */
-public class RelationView<P, C> extends VerticalView {
+public class RelationView<P, C, W> extends VerticalView {
 
     private P parentBean;
     private String parentToBeanField;
     private RelationState parentToBeanRelationState;
     private final Class<C> classOfBean;
     private final int noBeansPerPage;
-    private final DataAccessObject<C> dao;
+    private final DataAccessObject<C,W> dao;
     private ChoiceType choiceType;
-    private PageParameter pageParameter;
+    private PageParameter<W> pageParameter;
     //private SearchResultDataTable<C> allDataTableLayout;
-    private RelationDataTable<P, C> relationTableLayout;
+    private RelationDataTable<P, C, W> relationTableLayout;
 
     public RelationView(P parentBean,
             String parentToBeanField,
@@ -118,14 +118,14 @@ public class RelationView<P, C> extends VerticalView {
         form.addComponent(title);
 
         //Do query and build table  
-        final FindAnyEntityQuery<C> searchQuery = new FindAnyEntityQuery<>(
+        final FindAnyEntityQuery<C, W> searchQuery = new FindAnyEntityQuery<>(
                 classOfBean);
         FindRelationParameter<P, C> findRelationParameter = new FindRelationParameter<>(
                 parentBean,
                 parentToBeanField,
                 pageParameter.getRelationManagerFactory().create((Class<P>) parentBean.getClass(), classOfBean),
                 classOfBean);
-        FindRelationQuery<P, C> entityCollectionQuery = new FindRelationQuery<>(
+        FindRelationQuery<P, C, W> entityCollectionQuery = new FindRelationQuery<>(
                 findRelationParameter
         );
 
@@ -155,7 +155,7 @@ public class RelationView<P, C> extends VerticalView {
             Button associateExistingBtn = new Button(pageParameter.getLocalisedText("form.general.button.associate"), new Button.ClickListener() {
                 @Override
                 public void buttonClick(Button.ClickEvent event) {
-                    final SearchResultDataTable<C> allDataTableLayout = new SearchResultDataTable<>(searchQuery,
+                    final SearchResultDataTable<C,W> allDataTableLayout = new SearchResultDataTable<>(searchQuery,
                             classOfBean,
                             dao,
                             noBeansPerPage,
@@ -240,7 +240,7 @@ public class RelationView<P, C> extends VerticalView {
                         C currentBean = null;
                         try {
                             currentBean = dao.createNew(UserSecurityUtils.getCurrentTenant()); //dao.createAndSave(parentBean, parentToBeanField, pageParameter.getRelationManagerFactory().create((Class<P>) parentBean.getClass(), classOfBean));
-                            BeanView<P, C> beanView = new BeanView<P, C>(currentBean, parentBean, parentToBeanField, pageParameter);
+                            BeanView<P, C, W> beanView = new BeanView<P, C, W>(currentBean, parentBean, parentToBeanField, pageParameter);
                             String targetView = "CHOOSE_ONE_TABLE_VIEW_" + UUID.randomUUID().toString();
                             WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
                             History his = new History(targetView, pageParameter.getLocalisedText("history.button.addNewObject", myObject.name()));
@@ -271,7 +271,7 @@ public class RelationView<P, C> extends VerticalView {
                     public void buttonClick(Button.ClickEvent event) {
                         C currentBean = relationTableLayout.getTableValues().iterator().next();
                         if (currentBean != null) {
-                            BeanView<P, C> beanView = new BeanView<P, C>(currentBean, parentBean, parentToBeanField, pageParameter);
+                            BeanView<P, C, W> beanView = new BeanView<P, C, W>(currentBean, parentBean, parentToBeanField, pageParameter);
                             String targetView = "CHOOSE_ONE_TABLE_VIEW_" + UUID.randomUUID().toString();
                             WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
                             History his = new History(targetView, pageParameter.getLocalisedText("form.general.button.manage", myObject.name()));

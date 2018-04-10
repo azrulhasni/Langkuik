@@ -18,7 +18,7 @@ import org.azrul.langkuik.framework.relationship.RelationManager;
  *
  * @param <T>
  */
-public interface DataAccessObject<T> {
+public interface DataAccessObject<T,W> {
     //introspec
     Class<T> getType();
     T refresh(T entity);
@@ -51,8 +51,8 @@ public interface DataAccessObject<T> {
    
     //search
     <P> Collection<T> searchResultAlreadyInParent(Collection<T> searchResult, Class<T> daoClass, P parentObject, String parentToChildrenField);
-    <P> Long countQueryResult(DAOQuery<P, T> query, String tenantId);
-    <P> Collection<T> runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset,String tenantId);
+    <P> Long countQueryResult(DAOQuery<P, T, W> query, String tenantId, W worklist);
+    <P> Collection<T> runQuery(DAOQuery<P, T, W> query, String orderBy, boolean asc, int startIndex, int offset,String tenantId, W worklist);
     
     //audit
     //List<AuditedEntity> getAuditData(T bean,int startIndex, int offset, List<String> targetFields);

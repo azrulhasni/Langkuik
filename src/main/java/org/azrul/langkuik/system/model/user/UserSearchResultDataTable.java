@@ -46,15 +46,15 @@ import org.azrul.langkuik.security.role.UserSecurityUtils;
  *
  * @author azrulm8
  */
-public class UserSearchResultDataTable<C> extends DataTable<C> {
+public class UserSearchResultDataTable<C,W> extends DataTable<C,W> {
 
-    public UserSearchResultDataTable(FindAnyEntityQuery<C> parameter, Class<C> classOfBean, DataAccessObject<C> dao, int noBeansPerPage,/*final Set<String> currentUserRoles,*/ final EntityRight entityRight, final PageParameter pageParameter) {
+    public UserSearchResultDataTable(FindAnyEntityQuery<C,W> parameter, Class<C> classOfBean, DataAccessObject<C,W> dao, int noBeansPerPage,/*final Set<String> currentUserRoles,*/ final EntityRight entityRight, final PageParameter pageParameter) {
         this.daoQuery = parameter;
         createSearchPanel(classOfBean, /*currentUserRoles,*/ entityRight, pageParameter);
         createTablePanel(parameter, classOfBean, dao, noBeansPerPage, /*currentUserRoles,*/ entityRight, pageParameter);
     }
 
-    protected void createSearchPanel(final Class<C> classOfBean, /*final Set<String> currentUserRoles,*/ final EntityRight entityRight, final PageParameter pageParameter) throws UnsupportedOperationException, SecurityException, FieldGroup.BindException {
+    protected void createSearchPanel(final Class<C> classOfBean, /*final Set<String> currentUserRoles,*/ final EntityRight entityRight, final PageParameter<W> pageParameter) throws UnsupportedOperationException, SecurityException, FieldGroup.BindException {
         final BeanFieldGroup fieldGroup = new BeanFieldGroup(classOfBean);
         final FindAnyEntityQuery searchQuery = (FindAnyEntityQuery) daoQuery;
 
@@ -190,7 +190,7 @@ public class UserSearchResultDataTable<C> extends DataTable<C> {
                     Logger.getLogger(UserSearchResultDataTable.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 //do query
-                Collection<C> allData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant());
+                Collection<C> allData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(), pageParameter.getWorklist());
                 if (allData.isEmpty()) {
                     allData = new ArrayList<>();
                     try {
@@ -199,7 +199,7 @@ public class UserSearchResultDataTable<C> extends DataTable<C> {
                         Logger.getLogger(UserSearchResultDataTable.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
+                bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant(), pageParameter.getWorklist());
                 itemContainer.setBeans(allData);
                 itemContainer.refreshItems();
                 table.setPageLength(itemCountPerPage);
@@ -217,10 +217,10 @@ public class UserSearchResultDataTable<C> extends DataTable<C> {
         this.addComponent(searchBtn);
     }
 
-    public void deleteEntities(Collection<C> currentBeans) throws EntityIsUsedException {
+    public void deleteEntities(Collection<C> currentBeans, W worklist) throws EntityIsUsedException {
 
         dao.delete(currentBeans);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant());
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(), worklist);
         if (data.isEmpty()) {
             data = new ArrayList<>();
             try {
@@ -233,7 +233,7 @@ public class UserSearchResultDataTable<C> extends DataTable<C> {
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant(), worklist);
 
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {

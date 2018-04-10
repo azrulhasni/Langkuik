@@ -16,6 +16,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.TextField;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,20 +46,20 @@ import org.azrul.langkuik.security.role.EntityRight;
 import org.azrul.langkuik.security.role.FieldState;
 import org.azrul.langkuik.security.role.UserSecurityUtils;
 
-public class DataTable<C> extends VerticalLayout {
+public class DataTable<C,W> extends VerticalLayout {
 
     protected int currentTableIndex;
     protected Long bigTotal;
     protected String orderBy;
     protected boolean asc;
     protected Map<String, DataElementContainer> fieldsToBeDisplayedInTable;
-    protected Table table;
+    protected LangkuikTable table;
     protected int itemCountPerPage;
-    protected DataAccessObject<C> dao;
+    protected DataAccessObject<C,W> dao;
     protected WebEntityItemContainer<C> itemContainer;
     protected Label pageLabel;
     protected DAOQuery daoQuery;
-    protected PageParameter pageParameter;
+    protected PageParameter<W> pageParameter;
     protected String htmlTableLabel;
 
     public Map<String, DataElementContainer> getVisibleFields() {
@@ -75,7 +76,7 @@ public class DataTable<C> extends VerticalLayout {
     }
 
     public void refresh() {
-        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant()));
+        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist()));
         itemContainer.refreshItems();
     }
 
@@ -86,7 +87,7 @@ public class DataTable<C> extends VerticalLayout {
     public DataTable() {
         this.bigTotal = 0L;
         this.asc = true;
-        this.table = new Table(null);
+        this.table = new LangkuikTable();
         this.table.setMultiSelect(false);
         this.table.setNullSelectionAllowed(true); //help with vaadin bug where reselecting second time will retain old data
 
@@ -95,11 +96,11 @@ public class DataTable<C> extends VerticalLayout {
 
     protected void createTablePanel(final DAOQuery daoQuery,
             final Class<C> classOfBean,
-            final DataAccessObject<C> dao,
+            final DataAccessObject<C,W> dao,
             final int noBeansPerPage,
             /*final Set<String> currentUserRoles,*/
             final EntityRight entityOperation,
-            final PageParameter pageParameter,
+            final PageParameter<W> pageParameter,
             final boolean doNotDrawIfEmpty,
             final String htmlTableLabel) {
         this.currentTableIndex = 0;
@@ -109,8 +110,8 @@ public class DataTable<C> extends VerticalLayout {
         this.pageParameter = pageParameter;
         this.htmlTableLabel = htmlTableLabel;
 
-        Collection<C> allData = dao.runQuery(daoQuery, null, true, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant());
-        bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant());
+        Collection<C> allData = dao.runQuery(daoQuery, null, true, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist());
+        bigTotal = dao.countQueryResult(daoQuery, UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist());
 
         boolean draw = true;
         if (doNotDrawIfEmpty == false && allData.isEmpty() == true) {
@@ -228,16 +229,22 @@ public class DataTable<C> extends VerticalLayout {
                         table.addGeneratedColumn(derivedField.name(), new Table.ColumnGenerator() {
                             public Component generateCell(Table source, Object itemId, Object columnId) {
                                 try {
-                                    return new Label((String) method.invoke(itemId));
+                                    String value = (String) method.invoke(itemId);
+                                    Label label = new Label(value);
+                                    
+//                                    label.setWidth(String.valueOf(value.length() * 0.6)+"em");
+                                    return label;
+                                    //TextField tf = new TextField();
+                                    //tf.setValue(value);
+                                    //return tf;
                                 } catch (IllegalAccessException ex) {
                                     Logger.getLogger(DataTable.class.getName()).log(Level.SEVERE, null, ex);
                                 } catch (IllegalArgumentException ex) {
                                     Logger.getLogger(DataTable.class.getName()).log(Level.SEVERE, null, ex);
                                 } catch (InvocationTargetException ex) {
                                     Logger.getLogger(DataTable.class.getName()).log(Level.SEVERE, null, ex);
-                                } 
+                                }
                                 return new Label();
-                                
 
                             }
                         });
@@ -305,8 +312,9 @@ public class DataTable<C> extends VerticalLayout {
 
                     if (currentTableIndex > 0) {
                         currentTableIndex = 0;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant()));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist()));
                         itemContainer.refreshItems();
+
                         table.setPageLength(itemCountPerPage);
                     }
                     int currentUpdatedPage = currentTableIndex / itemCountPerPage;
@@ -326,9 +334,11 @@ public class DataTable<C> extends VerticalLayout {
                     }
                     if (currentTableIndex > 0) {
                         currentTableIndex -= itemCountPerPage;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant()));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist()));
                         itemContainer.refreshItems();
+                        table.resetColumnWidths();
                         table.setPageLength(itemCountPerPage);
+
                     }
                     int currentUpdatedPage = currentTableIndex / itemCountPerPage;
                     pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (currentUpdatedPage + 1), (lastPage + 1)));
@@ -350,8 +360,9 @@ public class DataTable<C> extends VerticalLayout {
                             int currentPage = currentTableIndex / itemCountPerPage;
                             if (currentPage < lastPage) {
                                 currentTableIndex += itemCountPerPage;
-                                itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant()));
+                                itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(), pageParameter.getWorklist()));
                                 itemContainer.refreshItems();
+                                table.resetColumnWidths();
                                 table.setPageLength(itemCountPerPage);
                             }
                             int currentUpdatedPage = currentTableIndex / itemCountPerPage;
@@ -372,8 +383,9 @@ public class DataTable<C> extends VerticalLayout {
                     int currentPage = currentTableIndex / itemCountPerPage;
                     if (currentPage < lastPage) {
                         currentTableIndex = lastPage * itemCountPerPage;
-                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant()));
+                        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(), pageParameter.getWorklist()));
                         itemContainer.refreshItems();
+                        table.resetColumnWidths();
                         table.setPageLength(itemCountPerPage);
                     }
                     pageLabel.setCaption(pageParameter.getLocalisedText("page.number", (lastPage + 1), (lastPage + 1)));
@@ -396,7 +408,7 @@ public class DataTable<C> extends VerticalLayout {
                     }
                     orderBy = column;
 
-                    Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant());
+                    Collection<C> tableData = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage, UserSecurityUtils.getCurrentTenant(), pageParameter.getWorklist());
                     if (tableData.isEmpty()) {
                         try {
                             tableData.add(dao.createNew(UserSecurityUtils.getCurrentTenant()));
@@ -407,6 +419,7 @@ public class DataTable<C> extends VerticalLayout {
                     }
                     itemContainer.setBeans(tableData);
                     itemContainer.refreshItems();
+                    table.resetColumnWidths();
                     table.setPageLength(itemCountPerPage);
                     //totalTableData = dao.countSearch(null, classOfBean);
                 }
@@ -477,7 +490,7 @@ public class DataTable<C> extends VerticalLayout {
 
     protected void createTablePanel(final DAOQuery parameter,
             final Class<C> classOfBean,
-            final DataAccessObject<C> dao,
+            final DataAccessObject<C,W> dao,
             final int noBeansPerPage,
             /*final Set<String> currentUserRoles,*/
             final EntityRight entityRight,
@@ -491,6 +504,21 @@ public class DataTable<C> extends VerticalLayout {
                 pageParameter,
                 true,
                 null);
+    }
+
+    public class LangkuikTable extends Table { //LangkuikTable is a Table where column would resize itself based on data by calling resetColumnWidths
+        
+        public LangkuikTable(){
+            super(null);
+            alwaysRecalculateColumnWidths = true;
+        }
+
+        public void resetColumnWidths() {
+           
+            for (Object object : getVisibleColumns()) {
+                setColumnWidth(object, -1);
+            }
+        }
     }
 
 }

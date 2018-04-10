@@ -20,16 +20,16 @@ import org.azrul.langkuik.security.role.FieldState;
  *
  * @author azrulm
  */
-public interface CustomTypeUICreator<C> {
+public interface CustomTypeUICreator<C,W> {
     
      Component createUIForForm(
             final C currentBean, 
             final Class<? extends CustomType> customClass, 
             final String pojoFieldName, 
             final BeanView view, 
-            final DataAccessObject<C> containerClassDao,
-            final DataAccessObject<? extends CustomType> customTypeDao,
-            final PageParameter pageParameter,
+            final DataAccessObject<C,W> containerClassDao,
+            final DataAccessObject<? extends CustomType, W> customTypeDao,
+            final PageParameter<W> pageParameter,
             final FieldState componentState,
             final Window window);
 

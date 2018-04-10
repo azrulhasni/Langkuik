@@ -31,13 +31,13 @@ import org.vaadin.dialogs.ConfirmDialog;
  * @author azrulm
  * @param <C>
  */
-public class SearchResultView<C> extends VerticalView {
+public class SearchResultView<C,W> extends VerticalView {
 
     private final Class<C> classOfBean;
     private final int noBeansPerPage;
-    private final DataAccessObject<C> dao;
-    private final PageParameter pageParameter;
-    private SearchResultDataTable<C> dataTable;
+    private final DataAccessObject<C,W> dao;
+    private final PageParameter<W> pageParameter;
+    private SearchResultDataTable<C,W> dataTable;
 
     public SearchResultView(Class<C> classOfBean, PageParameter pageParameter) {
         this(classOfBean, 3, pageParameter);
@@ -77,7 +77,7 @@ public class SearchResultView<C> extends VerticalView {
         BreadCrumbBuilder.buildBreadCrumb(vcevent.getNavigator(),
                 pageParameter.getBreadcrumb(),
                 pageParameter.getHistory());
-        FindAnyEntityQuery<C> searchQuery = new FindAnyEntityQuery<>(classOfBean);
+        FindAnyEntityQuery<C,W> searchQuery = new FindAnyEntityQuery<>(classOfBean);
         
         //set form
         FormLayout form = new FormLayout();
@@ -132,7 +132,7 @@ public class SearchResultView<C> extends VerticalView {
                         if (!currentBeans.isEmpty()) {
                             C currentBean = currentBeans.iterator().next();
                             if (currentBean != null) {
-                                BeanView<Object, C> beanView = new BeanView<>(currentBean, null, null, pageParameter);
+                                BeanView<Object, C, W> beanView = new BeanView<>(currentBean, null, null, pageParameter);
                                 String targetView = "CHOOSE_ONE_TABLE_VIEW_" + UUID.randomUUID().toString();
                                 WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
                                 History his = new History(targetView, pageParameter.getLocalisedText("form.general.button.manage", myObject.name()));

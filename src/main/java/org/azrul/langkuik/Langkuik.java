@@ -56,7 +56,7 @@ import org.azrul.langkuik.system.model.worklist.UserWorklist;
 import org.azrul.langkuik.system.model.worklist.UserWorklistDAO;
 import org.vaadin.dialogs.ConfirmDialog;
 
-public class Langkuik implements Serializable {
+public class Langkuik<W extends Enum> implements Serializable {
 
     private EntityManagerFactory emf = null;
     private UI ui = null;
@@ -64,7 +64,7 @@ public class Langkuik implements Serializable {
     private List<Class<?>> customTypeInterfaces = null;
     private AbstractComponentContainer loginPage = null;
     private ResourceBundle textResourceBundle = null;
-    private Class worklistType;
+    private Class<W> worklistType;
 
     //all parameters
     public Langkuik(final EntityManagerFactory emf,
@@ -73,7 +73,7 @@ public class Langkuik implements Serializable {
             final List<Class<?>> customTypeInterfaces,
             final AbstractComponentContainer loginPage,
             final ResourceBundle textResourceBundle,
-            final Class worklist) {
+            final Class<W> worklist) {
         this.emf = emf;
         this.ui = ui;
         this.relationManagerFactory = relationManagerFactory;
@@ -90,7 +90,7 @@ public class Langkuik implements Serializable {
             final List<Class<?>> customTypeInterfaces,
             final ResourceBundle textResourceBundle,
             final Boolean isMultiTenant,
-            final Class worklist) {
+            final Class<W> worklist) {
         this.emf = emf;
         this.ui = ui;
         this.relationManagerFactory = relationManagerFactory;
@@ -110,7 +110,7 @@ public class Langkuik implements Serializable {
             final RelationManagerFactory relationManagerFactory,
             final List<Class<?>> customTypeInterfaces,
             final Boolean isMultiTenant,
-            final Class worklist) {
+            final Class<W> worklist) {
         this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
 
         this.emf = emf;
@@ -130,7 +130,7 @@ public class Langkuik implements Serializable {
             final UI ui,
             final RelationManagerFactory relationManagerFactory,
             final Boolean isMultiTenant,
-            final Class worklist) {
+            final Class<W> worklist) {
         this.textResourceBundle = ResourceBundle.getBundle("Text", new Locale("en"));
 
         this.emf = emf;
@@ -149,8 +149,8 @@ public class Langkuik implements Serializable {
         UserDAO.setEMF(this.emf);
         RoleDAO.setEMF(this.emf);
         UserWorklistDAO.setEMF(this.emf);
-        for (Object worklistName : EnumSet.allOf(worklistType)) {
-            UserWorklistDAO.registerWorklist(worklistName.toString());
+        for (W worklist:worklistType.getEnumConstants()){
+            UserWorklistDAO.registerWorklist(worklist.toString());
         }
         UserSecurityUtils.init(this.emf);
 
@@ -234,7 +234,7 @@ public class Langkuik implements Serializable {
         //add system level custom type
         customTypeInterfaces.add(AttachmentCustomType.class);
         //create DAOs for custom types
-        final List<DataAccessObject<?>> customTypeDaos = new ArrayList<>();
+        final List<DataAccessObject<?,W>> customTypeDaos = new ArrayList<>();
         for (Class<?> clazz : customTypeInterfaces) {
             customTypeDaos.add(new HibernateGenericDAO(emf, clazz));
         }
@@ -255,14 +255,14 @@ public class Langkuik implements Serializable {
         final Deque<History> history = new ArrayDeque<>();
         final Configuration config = Configuration.getInstance();
 
-        final PageParameter pageParameter = new PageParameter(customTypeDaos,
+        final PageParameter<W> pageParameter = new PageParameter<W>(customTypeDaos,
                 emf,
                 relationManagerFactory,
                 history,
                 config,
                 breadcrumb,
                 textResourceBundle,
-                worklistType);
+                null);
 
         history.push(new History("START", pageParameter.getLocalisedText("history.start")));
         StartView startView = new StartView(pageParameter);
@@ -274,7 +274,7 @@ public class Langkuik implements Serializable {
         for (final Class rootClass : rootClasses) {
 
             final WebEntity myObject = (WebEntity) rootClass.getAnnotation(WebEntity.class);
-            final DataAccessObject<?> dao = new HibernateGenericDAO<>(emf, rootClass);
+            final DataAccessObject<?,W> dao = new HibernateGenericDAO<>(emf, rootClass);
 
             int state = 0;
             //manage state
@@ -288,14 +288,14 @@ public class Langkuik implements Serializable {
                 if (rootClass.equals(User.class) || rootClass.equals(Role.class) || rootClass.equals(UserWorklist.class)) {
                     state = 4;
                 } else {
-                        state = 5;
-                        if (UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE
-                                || UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE_DELETE) {
-                            state = 6;
-                        }else if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
-                            state = 8;
-                        }
-                    
+                    state = 5;
+                    if (UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE
+                            || UserSecurityUtils.getEntityRight(rootClass) == EntityRight.CREATE_UPDATE_DELETE) {
+                        state = 6;
+                    } else if (UserSecurityUtils.getEntityRight(rootClass) != EntityRight.RESTRICTED) {
+                        state = 8;
+                    }
+
                 }
             }
             //apply state
@@ -309,7 +309,7 @@ public class Langkuik implements Serializable {
                         try {
                             object = dao.createNew(UserSecurityUtils.getCurrentTenant());
 
-                            BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                            BeanView<Object, ?, W> createNewView = new BeanView<>(object, null, null, pageParameter);
                             String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
                             navigator.addView(targetView, (View) createNewView);
                             history.clear();
@@ -324,7 +324,7 @@ public class Langkuik implements Serializable {
                         }
                     }
                 });
-            } 
+            }
             if (state == 6) { //non admin user with CREATE and UPDATE rights
                 create.addItem(pageParameter.getLocalisedText("menu.new", myObject.name()), new MenuBar.Command() {
                     @Override
@@ -334,7 +334,7 @@ public class Langkuik implements Serializable {
                         Object object = null;
                         try {
                             object = dao.createNew(UserSecurityUtils.getCurrentTenant());
-                            BeanView<Object, ?> createNewView = new BeanView<>(object, null, null, pageParameter);
+                            BeanView<Object, ?,W> createNewView = new BeanView<>(object, null, null, pageParameter);
                             String targetView = "CREATE_NEW_APPLICATION_" + UUID.randomUUID().toString();
                             navigator.addView(targetView, (View) createNewView);
                             history.clear();
@@ -350,23 +350,28 @@ public class Langkuik implements Serializable {
 
                     }
                 });
-            } 
-            if (state == 8 || state ==6) { //non admin and vieweing rights
-                view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), new MenuBar.Command() {
-                    @Override
-                    public void menuSelected(MenuBar.MenuItem selectedItem) {
-                        pageParameter.setRootClass(rootClass);
-                        pageParameter.setType(WorkType.EDIT);
-                        SearchResultView<?> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
-                        String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
-                        navigator.addView(targetView, (View) seeApplicationView);
-                        history.clear();
-                        history.push(new History("START", "Start"));
-                        History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
-                        history.push(his);
-                        navigator.navigateTo(targetView);
-                    }
-                });
+            }
+            if (state == 8 || state == 6) { //non admin and vieweing rights
+                MenuBar.MenuItem item = view.addItem(pageParameter.getLocalisedText("menu.view.object", myObject.name()), null);
+                for (W worklist:worklistType.getEnumConstants()){
+                    
+                    item.addItem(worklist.toString(), new MenuBar.Command() {
+                        @Override
+                        public void menuSelected(MenuBar.MenuItem selectedItem) {
+                            pageParameter.setRootClass(rootClass);
+                            pageParameter.setType(WorkType.EDIT);
+                            pageParameter.setWorklistType(worklist);
+                            SearchResultView<?,W> seeApplicationView = new SearchResultView<>(rootClass, pageParameter);
+                            String targetView = "VIEW_APPLICATION_" + UUID.randomUUID().toString();
+                            navigator.addView(targetView, (View) seeApplicationView);
+                            history.clear();
+                            history.push(new History("START", "Start"));
+                            History his = new History(targetView, pageParameter.getLocalisedText("menu.view.object", myObject.name()));
+                            history.push(his);
+                            navigator.navigateTo(targetView);
+                        }
+                    });
+                }
             }
         }
 
@@ -378,7 +383,7 @@ public class Langkuik implements Serializable {
 
                 User currentUser = UserSecurityUtils.getCurrentUser();
                 //CurrentUser currentUser = new CurrentUser(user);
-                BeanView<?, User> userView = new BeanView<>(currentUser, pageParameter);
+                BeanView<?, User, W> userView = new BeanView<>(currentUser, pageParameter);
                 String targetView = "VIEW_USER_" + UUID.randomUUID().toString();
                 navigator.addView(targetView, (View) userView);
                 history.clear();
@@ -395,7 +400,8 @@ public class Langkuik implements Serializable {
                 public void menuSelected(MenuBar.MenuItem selectedItem) {
                     pageParameter.setRootClass(User.class);
                     pageParameter.setType(WorkType.EDIT);
-                    UserSearchResultView<User> seeApplicationView = new UserSearchResultView<>(User.class, pageParameter);
+                    pageParameter.setWorklistType(null);
+                    UserSearchResultView<User, W> seeApplicationView = new UserSearchResultView<>(User.class, pageParameter);
                     String targetView = "VIEW_USERS_" + UUID.randomUUID().toString();
                     navigator.addView(targetView, (View) seeApplicationView);
                     history.clear();
@@ -411,7 +417,7 @@ public class Langkuik implements Serializable {
                 public void menuSelected(MenuBar.MenuItem selectedItem) {
                     pageParameter.setRootClass(UserWorklist.class);
                     pageParameter.setType(WorkType.EDIT);
-                    SearchResultView<UserWorklist> seeApplicationView = new SearchResultView<>(UserWorklist.class, pageParameter);
+                    SearchResultView<UserWorklist, W> seeApplicationView = new SearchResultView<>(UserWorklist.class, pageParameter);
                     String targetView = "VIEW_WORKLIST_ACCESS_" + UUID.randomUUID().toString();
                     navigator.addView(targetView, (View) seeApplicationView);
                     history.clear();

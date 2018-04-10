@@ -16,6 +16,8 @@
 package org.azrul.langkuik.framework;
 
 import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 import org.azrul.langkuik.system.model.user.User;
 
@@ -25,6 +27,8 @@ import org.azrul.langkuik.system.model.user.User;
  */
 @MappedSuperclass
 public abstract class Work<T> {
+    
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
     protected T status;
     

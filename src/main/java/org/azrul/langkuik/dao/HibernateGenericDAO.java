@@ -45,7 +45,7 @@ import org.hibernate.search.jpa.Search;
  * @author azrulm
  * @param <T>
  */
-public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable {
+public class HibernateGenericDAO<T,W> implements DataAccessObject<T,W>, Serializable {
 
     private EntityManagerFactory emf;
     private Class<T> classOfEntity;
@@ -412,13 +412,13 @@ public class HibernateGenericDAO<T> implements DataAccessObject<T>, Serializable
 //        return newObject;
 //    }
     @Override
-    public <P> Collection runQuery(DAOQuery<P, T> query, String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
-        return query.doQuery(emf, orderBy, asc, startIndex, offset, tenantId);
+    public <P> Collection runQuery(DAOQuery<P, T, W> query, String orderBy, boolean asc, int startIndex, int offset, String tenantId, W worklist) {
+        return query.doQuery(emf, orderBy, asc, startIndex, offset, tenantId, worklist);
     }
 
     @Override
-    public <P> Long countQueryResult(DAOQuery<P, T> query, String tenantId) {
-        return query.count(emf, tenantId);
+    public <P> Long countQueryResult(DAOQuery<P, T, W> query, String tenantId, W worklist) {
+        return query.count(emf, tenantId, worklist);
 
     }
 

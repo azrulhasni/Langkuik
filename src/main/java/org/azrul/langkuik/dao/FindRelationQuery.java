@@ -26,7 +26,7 @@ import org.hibernate.metadata.ClassMetadata;
  *
  * @author azrulm
  */
-public class FindRelationQuery<P, C> implements DAOQuery<P, C>, Serializable {
+public class FindRelationQuery<P, C, W> implements DAOQuery<P, C, W>, Serializable {
 
   
     private EntityManagerFactory emf;
@@ -39,14 +39,14 @@ public class FindRelationQuery<P, C> implements DAOQuery<P, C>, Serializable {
     }
     
      @Override
-    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset, String tenantId) {
+    public Collection doQuery(EntityManagerFactory emf,String orderBy, boolean asc, int startIndex, int offset, String tenantId, W worklist) {
         this.emf = emf; 
         return getAllDependants(getParameter().getParentObject()
                  ,getParameter().getParentToCurrentField(), orderBy, asc, startIndex, offset);
      }
 
     @Override
-    public Long count(EntityManagerFactory emf, String tenantId) {
+    public Long count(EntityManagerFactory emf, String tenantId, W worklist) {
         this.emf = emf;
         return countDependants(getParameter().getParentObject()
                  ,getParameter().getParentToCurrentField());

@@ -90,13 +90,13 @@ import org.azrul.langkuik.system.choices.SystemData;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 
-public class BeanView<P, C> extends VerticalView {
+public class BeanView<P, C, W> extends VerticalView {
 
     private C currentBean;
     private final P parentBean;
     private final String parentToCurrentBeanField;
-    private final DataAccessObject<C> dao;
-    private final PageParameter pageParameter;
+    private final DataAccessObject<C, W> dao;
+    private final PageParameter<W> pageParameter;
     private int tabPage;
 
     public BeanView(C currentBean, P parentBean, String parentToCurrentBeanField,
@@ -301,7 +301,7 @@ public class BeanView<P, C> extends VerticalView {
                             fieldGroup.commit();
                             currentBean = (C) fieldGroup.getItemDataSource().getBean();
                             currentBean = saveBean(currentBean, parentBean, parentToCurrentBeanField, beanUtils, pageParameter/*currentUserRoles,*/);
-                            FindUsageView<C> findUsageDataTableView = new FindUsageView<>(pageParameter, currentBean);
+                            FindUsageView<C,W> findUsageDataTableView = new FindUsageView<>(pageParameter, currentBean);
                             String targetView = "FIND_USAGE_TABLE_VIEW_" + UUID.randomUUID().toString();
                             WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
                             History his = new History(targetView, pageParameter.getLocalisedText("form.general.button.findUsage", myObject.name()));
@@ -385,7 +385,7 @@ public class BeanView<P, C> extends VerticalView {
             final Map<String, Map<Integer, DataElementContainer>> groups,
             final BeanFieldGroup fieldGroup,
             //final Map<Integer, RelationContainer> relations,
-            final List<DataAccessObject<?>> customTypeDaos, Navigator nav,
+            final List<DataAccessObject<?,W>> customTypeDaos, Navigator nav,
             final FormLayout form) throws FieldGroup.BindException, UnsupportedOperationException {
         createForm(entityRight, /*currentUserRoles,*/ groups, null, fieldGroup, customTypeDaos, nav, form);
     }
@@ -396,7 +396,7 @@ public class BeanView<P, C> extends VerticalView {
             String group,
             final BeanFieldGroup fieldGroup,
             //final Map<Integer, RelationContainer> relations,
-            final List<DataAccessObject<?>> customTypeDaos,
+            final List<DataAccessObject<?,W>> customTypeDaos,
             final Navigator nav,
             final FormLayout form) throws FieldGroup.BindException, UnsupportedOperationException {
         //create bean utils
@@ -416,7 +416,7 @@ public class BeanView<P, C> extends VerticalView {
 
         //collect all cutsom types
         List<Class> customTypes = new ArrayList<>();
-        for (DataAccessObject<?> ctDao : customTypeDaos) {
+        for (DataAccessObject<?,W> ctDao : customTypeDaos) {
             customTypes.add(ctDao.getType());
         }
         //deal with every field
@@ -440,7 +440,7 @@ public class BeanView<P, C> extends VerticalView {
                 Object[] args = new Object[]{};
 
                 try {
-                    if (methodContainer.getPojoMethod().getReturnType().equals(pageParameter.getWorklistType())) {
+                    if (methodContainer.getPojoMethod().getReturnType().getSimpleName().equals(pageParameter.getWorklist())) {
                         //do nothing
                     } else {
                         Object derived = methodContainer.getPojoMethod().invoke(fieldGroup.getItemDataSource().getBean(), args);
@@ -570,7 +570,7 @@ public class BeanView<P, C> extends VerticalView {
                                     Class iclassOfField = fieldContainer.getPojoField().getType();
 
                                     //find a custom type dao
-                                    DataAccessObject<? extends CustomType> chosenCTDao = null;
+                                    DataAccessObject<? extends CustomType,W> chosenCTDao = null;
                                     for (DataAccessObject cdao : customTypeDaos) {
                                         if (cdao.getType().isAssignableFrom(iclassOfField)) {
                                             chosenCTDao = cdao;
@@ -580,7 +580,7 @@ public class BeanView<P, C> extends VerticalView {
 
                                     //deal with windows
                                     final Window window = new Window();
-                                    final SecretCustomTypeUICreator<C> secretCustomTypeUICreator = new SecretCustomTypeUICreator();
+                                    final SecretCustomTypeUICreator<C,W> secretCustomTypeUICreator = new SecretCustomTypeUICreator();
                                     Component customTypeComponent = secretCustomTypeUICreator.createUIForForm(currentBean,
                                             iclassOfField,
                                             fieldContainer.getPojoField().getName(),
@@ -675,7 +675,7 @@ public class BeanView<P, C> extends VerticalView {
                                     Class iclassOfField = (Class) ((ParameterizedType) fieldContainer.getPojoField().getGenericType()).getActualTypeArguments()[0];
 
                                     //find a custom type dao
-                                    DataAccessObject<? extends CustomType> chosenCTDao = null;
+                                    DataAccessObject<? extends CustomType,W> chosenCTDao = null;
                                     for (DataAccessObject cdao : customTypeDaos) {
                                         if (cdao.getType().isAssignableFrom(iclassOfField)) {
                                             chosenCTDao = cdao;
@@ -685,7 +685,7 @@ public class BeanView<P, C> extends VerticalView {
 
                                     //deal with windows
                                     final Window window = new Window();
-                                    final AttachmentCustomTypeUICreator<C> attachmentCustomTypeUICreator = new AttachmentCustomTypeUICreator();
+                                    final AttachmentCustomTypeUICreator<C,W> attachmentCustomTypeUICreator = new AttachmentCustomTypeUICreator();
                                     Component customTypeComponent = attachmentCustomTypeUICreator.createUIForForm(currentBean,
                                             iclassOfField,
                                             fieldContainer.getPojoField().getName(),

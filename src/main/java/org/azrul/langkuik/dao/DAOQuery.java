@@ -15,7 +15,7 @@ import javax.persistence.EntityManagerFactory;
  * @param <P>
  * @param <C>
  */
-public interface DAOQuery<P,C> {
-    Collection doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset, String tenantId);
-    Long count(EntityManagerFactory emf, String tenantId);
+public interface DAOQuery<P,C, W> {
+    Collection doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset, String tenantId, W worklist);
+    Long count(EntityManagerFactory emf, String tenantId, W worklist);
 }

@@ -16,12 +16,19 @@
 package org.azrul.langkuik.system.model.worklist;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
@@ -66,23 +73,35 @@ public class UserWorklist implements Serializable {
     @Field(analyze = Analyze.YES)
     @Size(max = 30)
     @Audited
-    @WebField(name="worklist name",rank=1, displayInTable=true, required=true)
+    @WebField(name="worklist name",rank=1, displayInTable=true, required=true,userMap = {
+                @FieldUserMap(role = "*", right = FieldRight.VIEW)
+            })
     protected String worklistName;
 
     @DerivedField(name="Roles", rank=2)
     public String getRoles(){
         StringBuilder sb = new StringBuilder();
-        if (rolesCollection.size()==1){
-            return ((Role)rolesCollection.iterator().next()).getRoleName();
-        }
-        for (Role role:rolesCollection){
-            sb.append(role.getRoleName()+",");
+//        if (rolesCollection.size()==1){
+//            return ((Role)rolesCollection.iterator().next()).getRoleName();
+//        }
+       List<Role> roles = new ArrayList<>();
+       roles.addAll(rolesCollection);
+       Collections.sort(roles);
+        for (Role role:roles){
+            if (sb.length() != 0) {
+                sb.append(", ");
+            }
+            sb.append(role.getRoleName());
         }
         return sb.toString();
     }
      
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn()
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            schema = "SYSTEM",
+            name = "WORKLIST_ROLES",
+            joinColumns = @JoinColumn(name = "WORKLIST_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "ROLE_ID", referencedColumnName = "ID"))
     @WebField(name = "roles", rank = 3,
             userMap = {
                 @FieldUserMap(role = "*", right = FieldRight.VIEW),

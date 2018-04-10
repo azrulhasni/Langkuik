@@ -43,10 +43,10 @@ import org.azrul.langkuik.security.role.UserSecurityUtils;
  * @author azrulhasni
  * @param <C>
  */
-public class FindUsageView<C> extends VerticalView {
+public class FindUsageView<C,W> extends VerticalView {
 
     private final DataAccessObject dao;
-    private final PageParameter pageParameter;
+    private final PageParameter<W> pageParameter;
     private final C currentBean;
     private final Map<String, FindUsageDataTable> dataTables;
 
@@ -122,7 +122,7 @@ public class FindUsageView<C> extends VerticalView {
                                         if (!currentBeans.isEmpty()) {
                                             C currentBean = currentBeans.iterator().next();
                                             if (currentBean != null) {
-                                                BeanView<Object, C> beanView = new BeanView<>(currentBean, null, null, pageParameter);
+                                                BeanView<Object, C, W> beanView = new BeanView<>(currentBean, null, null, pageParameter);
                                                 String targetView = "CHOOSE_ONE_TABLE_VIEW_" + UUID.randomUUID().toString();
                                                 WebEntity myObject = (WebEntity) currentBean.getClass().getAnnotation(WebEntity.class);
                                                 History his = new History(targetView, pageParameter.getLocalisedText("form.general.button.manage", myObject.name()));

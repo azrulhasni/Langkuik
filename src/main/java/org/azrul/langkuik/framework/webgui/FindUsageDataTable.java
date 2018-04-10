@@ -20,6 +20,6 @@ package org.azrul.langkuik.framework.webgui;
  *
  * @author azrulm
  */
-public class FindUsageDataTable<C> extends DataTable<C> {
+public class FindUsageDataTable<C,W> extends DataTable<C, W> {
     
 }

@@ -43,7 +43,7 @@ import org.hibernate.envers.query.AuditQuery;
  *
  * @author azrulm
  */
-public class AuditTrailQuery<T> implements DAOQuery<AuditedEntity, AuditedEntity>, Serializable{
+public class AuditTrailQuery<T,W> implements DAOQuery<AuditedEntity, AuditedEntity, W>, Serializable{
 
     private Class<T> classOfEntity;
     private T auditedObject;
@@ -57,13 +57,13 @@ public class AuditTrailQuery<T> implements DAOQuery<AuditedEntity, AuditedEntity
     }
 
     @Override
-    public Collection<AuditedEntity> doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset,String tenantId) {
+    public Collection<AuditedEntity> doQuery(EntityManagerFactory emf, String orderBy, boolean asc, int startIndex, int offset,String tenantId, W worklist) {
         this.emf = emf;
         return getAuditData(auditedObject, startIndex, offset, null, startingFrom, tenantId);
     }
 
     @Override
-    public Long count(EntityManagerFactory emf, String tenantId) {
+    public Long count(EntityManagerFactory emf, String tenantId,W worklist) {
         return getAuditDataSize(emf, auditedObject, startingFrom,tenantId);
     }
 

@@ -27,13 +27,13 @@ import org.azrul.langkuik.security.role.UserSecurityUtils;
  * @param <P>
  * @param <C>
  */
-public class RelationDataTable<P,C> extends DataTable<C> {
+public class RelationDataTable<P,C,W> extends DataTable<C,W> {
     private FindRelationParameter<P, C> findRelationParameter=null;
     
-    public RelationDataTable(FindRelationQuery<P,C> daoQuery, 
+    public RelationDataTable(FindRelationQuery<P,C,W> daoQuery, 
             FindRelationParameter<P, C>  findRelationParameter,
             Class<C> classOfBean, 
-            DataAccessObject<C> dao, 
+            DataAccessObject<C,W> dao, 
             int noBeansPerPage,  
             //final Set<String> currentUserRoles,
             final EntityRight entityOperation,
@@ -45,11 +45,11 @@ public class RelationDataTable<P,C> extends DataTable<C> {
     
     
     public P deleteEntities(Collection<C> beans) {
-        FindRelationQuery<P,C> query = (FindRelationQuery<P,C>)daoQuery;
+        FindRelationQuery<P,C,W> query = (FindRelationQuery<P,C,W>)daoQuery;
         P parentBean = dao.unlinkAndDelete(findRelationParameter, beans);
         findRelationParameter.setParentObject(parentBean);
         query.setParameter(findRelationParameter);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant(), pageParameter.getWorklist());
         if (data.isEmpty()) {
             data = new ArrayList<>();
             try {
@@ -62,7 +62,7 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist());
         
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
@@ -76,11 +76,11 @@ public class RelationDataTable<P,C> extends DataTable<C> {
     }
 
     public P dissociateEntities(Collection<C> beans) {
-        FindRelationQuery<P,C> query = (FindRelationQuery<P,C>)daoQuery;
+        FindRelationQuery<P,C,W> query = (FindRelationQuery<P,C,W>)daoQuery;
         P parentBean = dao.unlink(findRelationParameter, beans);
         findRelationParameter.setParentObject(parentBean);
         query.setParameter(findRelationParameter);
-        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant());
+        Collection<C> data = dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist());
         if (data.isEmpty()) {
             data = new ArrayList<>();
             try {
@@ -93,7 +93,7 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         }
         itemContainer.setBeans(data);
         itemContainer.refreshItems();
-        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist());
         
         int lastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {
@@ -107,7 +107,7 @@ public class RelationDataTable<P,C> extends DataTable<C> {
     }
 
     public P associateEntities(Collection<C> entities, ChoiceType choiceType) {
-        FindRelationQuery<P, C> query = (FindRelationQuery<P, C>)daoQuery;
+        FindRelationQuery<P,C,W> query = (FindRelationQuery<P, C,W>)daoQuery;
         
         P parent = null;
         if (choiceType == ChoiceType.CHOOSE_ONE) {
@@ -119,8 +119,8 @@ public class RelationDataTable<P,C> extends DataTable<C> {
         }
         findRelationParameter.setParentObject(parent);
         query.setParameter(findRelationParameter);
-        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant());
-        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant()));
+        bigTotal = dao.countQueryResult(daoQuery,UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist());
+        itemContainer.setBeans(dao.runQuery(daoQuery, orderBy, asc, currentTableIndex, itemCountPerPage,UserSecurityUtils.getCurrentTenant(),pageParameter.getWorklist()));
         itemContainer.refreshItems();
         int beanLastPage = (int) Math.floor(bigTotal / itemCountPerPage);
         if (bigTotal % itemCountPerPage == 0) {

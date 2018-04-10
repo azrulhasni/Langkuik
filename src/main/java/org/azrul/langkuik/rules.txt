@@ -12,3 +12,4 @@
 11) Secret is a custom onetoonefield. Must be eager and cascadetype.All
 12) To make a field searchable: 1) The entity itself must be @Indexed and the field must be @Analyzed
 13) The annotations min/max in WebField is only applicable for OneToMany
+14) W for Worklist type can be only 1

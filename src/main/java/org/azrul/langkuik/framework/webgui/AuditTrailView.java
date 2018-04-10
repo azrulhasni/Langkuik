@@ -38,10 +38,10 @@ import org.azrul.langkuik.security.role.UserSecurityUtils;
  * @author azrulm
  * @param <C>
  */
-public class AuditTrailView<C> extends VerticalView {
+public class AuditTrailView<C,W> extends VerticalView {
     
-    private final DataAccessObject<AuditedEntity> dao;
-    private final PageParameter pageParameter;
+    private final DataAccessObject<AuditedEntity,W> dao;
+    private final PageParameter<W> pageParameter;
     private final Class<C> classOfEntity;
     private final int noEntriesPerPage;
     private final C currentBean;
