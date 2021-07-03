@@ -21,15 +21,15 @@ import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
 import com.azrul.langkuik.views.MainLayout;
-import com.azrul.langkuik.views.helloworld.HelloWorldView;
+//import com.azrul.langkuik.views.helloworld.HelloWorldView;
 import com.azrul.langkuik.views.about.AboutView;
-import com.azrul.langkuik.views.masterdetail.MasterDetailView;
+//import com.azrul.langkuik.views.masterdetail.MasterDetailView;
 
 /**
  * The main view is a top-level placeholder for other views.
  */
-@PWA(name = "Langkuik", shortName = "Langkuik", enableInstallPrompt = false)
-@Theme(themeFolder = "langkuik")
+//@PWA(name = "Langkuik", shortName = "Langkuik", enableInstallPrompt = false)
+//@Theme(themeFolder = "langkuik")
 public class MainLayout extends AppLayout {
 
     private final Tabs menu;
@@ -80,14 +80,14 @@ public class MainLayout extends AppLayout {
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         tabs.addThemeVariants(TabsVariant.LUMO_MINIMAL);
         tabs.setId("tabs");
-        tabs.add(createMenuItems());
+//        tabs.add(createMenuItems());
         return tabs;
     }
 
-    private Component[] createMenuItems() {
-        return new Tab[]{createTab("Hello World", HelloWorldView.class), createTab("About", AboutView.class),
-                createTab("Master-Detail", MasterDetailView.class)};
-    }
+//    private Component[] createMenuItems() {
+//        return new Tab[]{createTab("Hello World", HelloWorldView.class), createTab("About", AboutView.class),
+//                createTab("Master-Detail", MasterDetailView.class)};
+//    }
 
     private static Tab createTab(String text, Class<? extends Component> navigationTarget) {
         final Tab tab = new Tab();

@@ -1,6 +1,4 @@
 {
-  "name": "no-name",
-  "license": "UNLICENSED",
   "dependencies": {
     "@polymer/iron-icon": "3.0.1",
     "@polymer/iron-list": "3.1.0",
@@ -70,6 +68,8 @@
     "webpack-dev-server": "3.11.0",
     "webpack-merge": "4.2.2"
   },
+  "license": "UNLICENSED",
+  "name": "no-name",
   "vaadin": {
     "dependencies": {
       "@polymer/iron-icon": "3.0.1",
@@ -139,6 +139,6 @@
       "webpack-dev-server": "3.11.0",
       "webpack-merge": "4.2.2"
     },
-    "hash": "9dd1803ab48c25b4e4c2f3464e35c9c005f75f10ef3de379bb530754654cda07"
+    "hash": "6839ef233a22534c30ea863812f4c5c7fab4d18c896e8c05e2ee7fc91072ae53"
   }
 }

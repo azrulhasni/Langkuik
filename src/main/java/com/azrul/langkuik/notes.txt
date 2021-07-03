@@ -1,0 +1,120 @@
+Getting started
+---------------
+1) Install Keycloak
+2) Load realm-export.json
+3) Create a user + password (e.g. donald.duck)
+4) Make sure the user has an email
+5) Make sure the box "Required User Actions" is empty
+6) Make sure the role is "user"
+7) Save user
+8) Launch Langkuik - and click on Login button
+9) Put in user credentials + password (donald.duck + password)
+10) Good to go
+
+To be done
+----------
+DONE 1) Filter PojoView link existing table to reflect One_To_One, One_To_Many (Entity with relationship is filtered out)
+ and Many_To_One or Many_To_Many (show all)
+DONE 2) Use inheritence to manage draft version
+    - parent class (LangkuikExt) has tranxId
+    - when an object is newly created (i.e. the Dialog for that object is still displayed), the object is in PRE_DRAFT. It will be converted to draft when saved
+    - when create an object graph (aggregate in DDD), all entities in the graph will have the same tranxId, status for the whole graph is now DRAFT
+    - when the root is persisted -> query all parent objects having the same tranxId as the root object -> move their status from DRAFT to IN PROGRESS
+    - Any object still in PRE_DRAFT, will be deleted
+
+DONE 4) Range queries (numbers, dates, string)
+DONE 5) Compulsory fields
+DONE 6) Attachments
+DONE 7) Custom Components
+8) Search parse error to surface
+DONE 9) Draft version should look different
+DONE 10) Able to delete draft version
+DONE AND DONE 11) Use optional to manage nulls
+DONE 12) Able to unlink/delete stuff
+DONE 13) Dynamic combobox lookup (one lookup filter the other)
+DONE 14) Reverse dynamic lookup
+DONE 15) DB cache
+DONE 16) Audit trail
+DONE 17) Where used
+18) Highlight search - at least in table
+19) Put ids on component for automation
+20) Automated test
+21) Map/Location custom type
+22) Display worklist
+
+
+Admin feature
+-------------
+1) Audit trail (on all objects)
+2) Specify workflow parameters
+    
+
+Conventions
+-----------
+1) Search field with 4sort is for sorting and 4range is for range search
+2) Field with BOTH @Audited and @WebField will be displayed on audit trail page. @WebField visibleInTable must equal true
+3) Attachments must be OneToOne(cascade = CascadeType.ALL)
+
+4) When [A]-->[B],
+    if B is root, A can only 'Link existing' Bs (Bs that can be linked must have status=Done)
+    if B is non root, A can only 'Add new' Bs
+
+5) When [A]-->[B],
+    if B is root, from A, a user cannot modify B, a user  cannot delete B. A can only associate/disassociate itself from B
+    if B is non root, from A, a user CAN modify B, a user CAN delete B. It does not matter if A is root or not
+    
+6) Status / worklist will only be tracked in root entities
+
+Notes
+-----
+1) Putting @NumericField on a numeric field forces it to be numeric despite having a bridge translating the field to String
+2) Dealing with file upload
+    1) Use LangkuikMultiFileBuffer - this will allow us to upload many files
+        constraint it to 1 - this will constraint us to upload 1 file at a time. We need to do this because our error message coming from the Upload component does not say which file is erroneous. So, it is better to upload one at a time and therefore the error message, if appears, definitely is associated to the latest uploaded file
+    2) We need to constraint the upload in 2 places:
+
+        in application.properties (need to be big)(*1)
+
+            spring.servlet.multipart.max-file-size=2MB
+            spring.servlet.multipart.max-request-size=2MB
+
+        in Vaadin Upload component 
+
+            upload.setMaxFileSize(2_000_000); <--Vaadin upload error handling will only capture violation beyond this limit and thus (*1) 
+
+3) Idea: to try out EntityGraph to load the first object when the main table is clicked. 
+        -> This cannot work because EntityGraph does not allow in-db pagination for subentities
+
+4) We are using Hibernate Validator for validating fields. Unfortunately, the moment we have  Validator's annotation,
+   Hibernate will insist on validating every persistent we do. This is bad because we also persist 'pre=draft' object 
+   to allow, say, file upload for example. These pre-draft objects are not necessarily valid (thus the name, pre-draft)
+   So, we need to disable Hibernate validation: 
+
+        properties.setProperty("javax.persistence.validation.mode","none");
+
+5) Seeing that the lookup table is "looked up" in real time, we may want to cache it. 
+   For now we are only caching the lookup entity (DistrictStateCountry)
+
+6) This is not feasible because querying LangkuikExt does return the objects we want. Plus, the query is a bunch of
+UNIONs and will negate index. So probably not. Need to find another way to switch status => When an object is first created (when the Create New button is clicked in TableView) the object is created with PREDRAFT status.
+When object is saved as draft, PREDRAFT -> DRAFT. If something happened (say, the user just let the Create New dialog on
+until session expires), the object will still be in PREDRAFT status. PREDRAFT objects will not be shown in search. 
+Need to see how to clean up left over PREDRAFTS that is not converted to DRAFT.
+
+7) Discard management. Discard management is done at PojoView level. So, if you do:
+    A (discarded) => B (save as draft), then B is "orphaned". Of course you can still look up B through "link existing"
+    Also, in case of something wrong, the "default" is "save as draft". So, if anything happened, we will not loose data.
+
+8) Getting User custom attribute from Keycloak. Make sure the attribute is created under User and a Mapper is created under Client
+https://stackoverflow.com/questions/53224680/retrieve-custom-attribute-from-javascript-using-javascript-adapter-keycloak
+
+9) Alternative to #6 above - see convention #5 and #6
+
+10) To help "solve" the issue in #6, we enacted a few things:
+    a. Introduce WebEntityType=REF. REF is an advanced lookup. REF would need to be managed separately (special role)
+        and can only be linked to a root
+    b. From root, you can only CREATE non-root (called WebEntityType=NOMINAL) entities. You cannot link to it
+    c. We should only support M-N, M1 and 1-1 uni-directional relationship. 1-M should only be modeled as M-N
+
+    This way, root and the aggregate is really isolated and boundaries are proper
+

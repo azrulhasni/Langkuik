@@ -1,0 +1,64 @@
+{
+    "name": "LoanWorkflow",
+    "version": "1.0",
+    "root": "com.azrul.langkuik.loanorigsystem.model.Application",
+    "variables": {
+        "a": "String",
+        "b": "Number"
+    },
+    "startEvent": {
+        "id": "0",
+        "canBeStartedBy": ["RelationshipManager", "BranchStaff"],
+        "next": "1"
+    },
+
+    "workflow": [
+        {
+            "id": "1",
+            "type": "service",
+            "next": "2",
+            "description": "Call credit bureau",
+            "handledBy": "Underwriter",
+            "script":"System.out.println(root.getId())"
+        },
+        {
+            "id": "2",
+            "type": "human",
+            "description": "Underwriting",
+            "next": "3",
+            "handledBy": "Underwriter"
+        },
+        {
+            "id": "3",
+            "type": "xor",
+            "branches": [{
+                    "condition": "root.isApproved()==true",
+                    "next": "4"
+                }],
+            "defaultBranch": "END"
+        },
+        {
+            "id": "4",
+            "type": "human",
+            "next": "5",
+             "description": "Disburse fund",
+            "handledBy": "DisboursementOfficer"
+        },
+        {
+            "id": "5",
+            "type": "service",
+            "next": "6",
+            "handledBy": "DisboursementOfficer",
+             "description": "Alert user",
+             "script":"System.out.println('Send email')"
+        },
+         {
+            "id": "6",
+            "type": "human",
+            "next": "END",
+            "description": "Update account",
+            "handledBy": "RelationshipManager"
+        }
+        
+    ]
+}
